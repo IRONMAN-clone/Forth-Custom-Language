@@ -1,0 +1,6 @@
+4 2   mod   print
+4 2   swap  print
+4 2   drop  print
+4 2   over  print
+4 2 5 rot   print
+1 2   nip   print
