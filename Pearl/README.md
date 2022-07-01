@@ -48,7 +48,7 @@ if 34 35 + 70 = then 69 else 420 end print
 if 34 35 + 69 = then 69 else 420 end print
 ```
 
-Here <if> is the condition builder and <then> is the condition controller <else> is failed status of the condition in <then>
+Here if is the condition builder and then is the condition controller else is failed status of the condition in then
 
 ```c
 10 while dup 0 > then
@@ -57,7 +57,7 @@ Here <if> is the condition builder and <then> is the condition controller <else>
 end
 ```
 
-Here <while> is the loop builder and <then> is as usual used as the loop condition controller <end> is the keyword which is controlling if 'that' time loop is gonna repeat or not
+Here while is the loop builder and then is as usual used as the loop condition controller end is the keyword which is controlling if 'that' time loop is gonna repeat or not
 
 # Tests
 ./examples/
