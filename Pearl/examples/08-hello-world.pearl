@@ -1,0 +1,17 @@
+;; "Hello, World" from arbitrary memory section
+
+*memory 72  memory
+*memory 101 memory
+*memory 108 memory
+*memory 108 memory
+*memory 111 memory
+*memory 44  memory
+*memory 32  memory
+*memory 87  memory
+*memory 111 memory
+*memory 114 memory
+*memory 108 memory
+*memory 100 memory
+*memory 10  memory
+
+1 0 *memory write
