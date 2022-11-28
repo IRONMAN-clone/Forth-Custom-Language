@@ -1,4 +1,0 @@
-10 while dup 0 > then
-    dup print
-    1 -
-end
