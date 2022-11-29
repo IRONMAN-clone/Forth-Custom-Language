@@ -1,0 +1,6 @@
+1 1 bor     print
+1 1 band    print
+1 1 bxor    print
+1 1 bshl    print
+1 1 bshr    print
+1   bnot    print
