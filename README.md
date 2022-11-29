@@ -4,6 +4,6 @@
 
 
 <h1> Improvements <h1>
-<h3> Pitt now accepts `int` and till now no crashes are detected <h3>
+<h3> Till now no crashes are detected and constantly being upgraded <h3>
   
  <h3> Same as pitt this is also stack based version but better! <h3>
