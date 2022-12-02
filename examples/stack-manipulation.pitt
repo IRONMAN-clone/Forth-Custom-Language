@@ -1,0 +1,8 @@
+;; --- Stack Manipulation ---
+100 99 drop print
+2 4 over print
+4 dup print print
+23 32 swap print
+1 2 3 rot print print print
+1 2 3 -rot print print print
+4 1 2 nip print print
