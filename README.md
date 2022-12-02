@@ -4,6 +4,20 @@
 
 Pitt is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programming_language) [Stack-Oriented](https://en.wikipedia.org/wiki/Stack-oriented_programming) [Programming Language](https://en.wikipedia.org/wiki/Programming_language) for [Computers](https://en.wikipedia.org/wiki/Computer)
 
+# Help
+```console
+./pitt 
+```
+``` pascal
+pitt: fatal error: no input files or operation type provided!
+PITT:
+pitt (command) <filename> [subcmd]
+COMMAND:
+       run     simulates the file
+       dump    dumps all the tokens
+SUBCMD:
+       timeit  Times exection time
+```
 
 # Simulation
 ``` Pascal
