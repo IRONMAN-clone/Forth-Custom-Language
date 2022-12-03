@@ -1,0 +1,40 @@
+;; ----- ./rule110.pitt -----
+;; Implementation of RULE110 in `PITT`
+addr(i8) 1  + 1 !i8
+addr(i8) 98 + 1 !i8
+
+
+0 while dup 98 < then
+   0 while dup 100 < then
+      if dup addr(i8) + @i8 then
+      	 addr(i8) 100 + 42 !i8
+      else
+         addr(i8) 100 + 32 !i8
+      end
+
+      1 addr(i8) 100 + 1 1 write
+
+      1 +
+      end
+      drop
+
+      addr(i8)   100 + 10 !i8
+      1 addr(i8) 100 + 1 1 write
+
+      ;; Pattern for 110
+      addr(i8)     @i8 1 shl
+      addr(i8) 1 + @i8
+      bor 
+
+      1 while dup 98 < then
+      	 swap 1 shl 7 band
+	 over addr(i8) + 1 + @i8
+	 bor
+	 over over 110 swap shr 1 band
+	 swap addr(i8) + swap !i8
+	 swap 
+	 1 + 
+      end drop drop
+
+      1 +
+end drop
