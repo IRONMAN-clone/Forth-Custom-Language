@@ -1,5 +1,0 @@
-if 32 32 + 64 then
-    1 print
-else 
-    2 print
-end 
