@@ -1,5 +1,5 @@
-;; ----- ./rule110.pitt -----
-;; Implementation of RULE110 in `PITT`
+# ----- ./rule110.pitt -----
+# Implementation of RULE110 in `PITT`
 addr(i8) 1  + 1 !i8
 addr(i8) 98 + 1 !i8
 
@@ -21,7 +21,7 @@ addr(i8) 98 + 1 !i8
       addr(i8)   100 + 10 !i8
       1 addr(i8) 100 + 1 1 write
 
-      ;; Pattern for 110
+      # Pattern for 110
       addr(i8)     @i8 1 shl
       addr(i8) 1 + @i8
       bor 

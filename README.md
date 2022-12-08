@@ -5,32 +5,19 @@
 Pitt is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programming_language) [Stack-Oriented](https://en.wikipedia.org/wiki/Stack-oriented_programming) [Programming Language](https://en.wikipedia.org/wiki/Programming_language) for [Computers](https://en.wikipedia.org/wiki/Computer)
 
 
+# Info
+**NOTE: PITT'S PARSING METHODE HAS BEEN CHANGED**
+
 # Simulation
 ``` Pascal
 ./hello.pitt
-25 5 * print
+"Hello World" puts
 ```
 ```console
 ./pitt run ./hello.pitt
 ..... Simulation Infos ......
-125
+Hello World
 ```
-
-# Help
-```console
-./pitt 
-```
-``` pascal
-pitt: fatal error: no input files or operation type provided!
-PITT:
-pitt (command) <filename> [subcmd]
-COMMAND:
-       run     simulates the file
-       dump    dumps all the tokens
-SUBCMD:
-       timeit  Times exection time
-```
-
 #### Stack Operations
 
 | Keyword    | Signature        | Description                                                                                  |
@@ -45,14 +32,16 @@ SUBCMD:
 # Memory 
 | Keyword   | Signature        | Operation                                                   |
 | ----      | ----             | ----                                                        |
-| `!i8`       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack      |                     
-| `@i8`       | `a b -- a`       | Pops location from the stack and reads the location from  byte stack           |                                                     
-| `addr(i8)`  | ` -- a`          | Pushes the beginning of the byte stack usable location into the stack           |
-| `puts`      | `a b -- `        | Pops two items from the stack(end and begin) then reads from begin to end in byte stack and dumps them to stdout    |
-| `putc`      | `a -- `          | Pops location from the stack and writes it into stdout      |
-
-# Syscalls
-*write:- Writes the buffer into file descriptor*
+| !i8       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
+| @i8       | `a b -- a`       | Pops location from the stack and reads the location from  
+byte stack                                                                                   |
+| addr(i8)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
+the stack                                                                                    |
+| puts      | `a b -- `        | Pops two items from the stack(end and begin) then reads from
+begin to end in byte stack and dumps them to stdout                                          |
 
 # Examples
 *Located at ./examples/*
+
+# NOTE
+*Our basic type checking is done in RUNTIME*

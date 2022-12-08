@@ -58,7 +58,8 @@ typedef enum {
     P_WORD, // Used as Variable names too and for macros too
 
     P_COMMENT,
-    P_UNDEF
+    P_UNDEF,
+    P_EOT
 }PittType;
 
 std::map<std::string,PittType> usable_map;
@@ -88,7 +89,7 @@ void init_map()
     usable_map["/"] = P_DIV;
     usable_map["print"] = P_FUNC_PRINT;
     usable_map["puts"] = P_FUNC_PUTS;
-    usable_map[";;"] = P_COMMENT;
+    usable_map["#"] = P_COMMENT;
     usable_map["if"] = P_IF;
     usable_map["elif"] = P_ELIF;
     usable_map["end"] = P_END;
@@ -109,6 +110,9 @@ typedef struct Token {
     int r{},c{};
     std::string token{};
     PittType type{};
+
+    // String Error Injection
+    bool unescaped{};
 }Pitt_token;
 
 

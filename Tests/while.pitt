@@ -1,4 +1,4 @@
-;; ---- Multiplication Table ----
+# ---- Multiplication Table ----
 
 0 while dup 10 <= then
     0 while dup 10 <= then
@@ -7,6 +7,6 @@
     end
     drop 
     1 +
-end 
+end drop
 
 

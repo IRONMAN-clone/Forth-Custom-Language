@@ -1,0 +1,12 @@
+# Euler-01 Divisible of 3 and 5
+
+0 3 while dup 1000 < then
+  dup  3 % 0 = 
+  over 5 % 0 =
+  bor
+  if then
+     over over + swap 
+  end
+  1 +
+end
+drop print
