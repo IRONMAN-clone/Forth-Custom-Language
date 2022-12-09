@@ -1,9 +1,0 @@
-if 34 35 + 69 = then 
-    if 0 then
-        23 print
-    else 
-        42 print
-    end
-else 
-    420 print
-end

@@ -1,7 +1,0 @@
-# ---- Bitwise Operations ----
-1 1 band print
-1 1 bor print
-1 1 shl print
-1 1 shr print
-1   not print
-1 1 xor print
