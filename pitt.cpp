@@ -1,11 +1,10 @@
-// TODO LIST:
+// TODO: LIST
 // TODO: Add Linux Syscalls Support
 // TODO: Fix a little bit of parsing to add // to strings
 // TODO: Add different value stack-pointers (@i16,@i32) [@i64 is OPTIONAL we could implement it in pitt too]
 // TODO: Add float support [Not as main] (@f32,@f64) [OPTIONAL]
 // TODO: Add operation type provider (Semi Generics Support) for operations with different type of variables
 //       Syntax = "value value <Type to operate stack>(if none provided @i32 is operated) <operator>"
-// TODO: Add support for `macros`
 // TODO: Add argc and argv support
 // TODO: Add variable support
 // TODO: Add function support (Add `main` entry check if possible) [INFO: Arguments are not directly defined they are popped from the respective stack]
@@ -14,6 +13,7 @@
 // TODO: Add dynamic memory which can be released [maybe!?] (Keyword: `memory name size end`)
 // TODO: Add `import` keyword
 // TODO: Add Structures
+// TODO: Add functions 
 
 #include <iostream>
 #include <fstream>
@@ -126,7 +126,7 @@ bool isnum(string &text)
 
 PittType fetch_type(string &text)
 {
-    PittType rettype = P_UNDEF;
+    PittType rettype = P_WORD;
     for (auto it : usable_map)
     {
         if (text == it.first)
@@ -152,6 +152,7 @@ int parse_words_in_text(string &text)
 }
 
 // FIXME: ADD SUPPORT FOR `\\"`
+// TODO: Apply a little fix 
 void parse(const char *filename, Pitt_token *token_list)
 {
     ifstream file{filename};
@@ -159,7 +160,7 @@ void parse(const char *filename, Pitt_token *token_list)
     string temp_buffer{};
 
     int tc_count = -1;
-    int col_ctr = {};
+    int col_ctr = 0;
     int line = {};
 
     while (getline(file, temp_buffer))
@@ -169,15 +170,20 @@ void parse(const char *filename, Pitt_token *token_list)
         bool encountered = false;
 
         istringstream serve(temp_buffer);
+        string counter_buffer = temp_buffer;
         while (serve >> tokens)
         {
-            col_ctr = static_cast<int>(temp_buffer.find(tokens));
+            // We have to change counter_buffer[col_ctr] to some random trash numbers
+            // becase .find() will never check for duplicates and will keep getting the 
+            // duplicates 
+            col_ctr = static_cast<int>(counter_buffer.find(tokens));
+            counter_buffer[col_ctr] = -1;
 
             if (waitfor > 0 && encountered == true)
             {
                 waitfor--;
                 if (waitfor == 0)
-                    encountered = false;
+                    encountered = false;  
             }
 
             if (tokens[0] == '"' && encountered == false)
@@ -187,7 +193,7 @@ void parse(const char *filename, Pitt_token *token_list)
                 string lexedstr = "";
                 int scopeCount = 0;
 
-                size_t begin = static_cast<int>(col_ctr);
+                size_t begin = static_cast<size_t>(col_ctr);
                 size_t end = begin + 1;
 
                 for (size_t dupend = end; dupend < temp_buffer.size(); dupend++)
@@ -256,7 +262,7 @@ void parse(const char *filename, Pitt_token *token_list)
                 {
                     token_list[tc_count].type = fetch_type(tokens);
                 }
-            }
+            }          
         }
     }
 
@@ -264,13 +270,10 @@ void parse(const char *filename, Pitt_token *token_list)
     while (getline(file, temp_buffer))
     {
         line++;
-
-
         int begin = {}, end = {} , ignore_words = {};
         bool pass1 = false;
         string lexstr = {};
         begin = static_cast<int>(temp_buffer.find('"'));
-
         if (begin != -1)
         {
             for (end = begin + 1; end < temp_buffer.size(); end++)
@@ -283,12 +286,10 @@ void parse(const char *filename, Pitt_token *token_list)
                 }
             }
         }
-
         istringstream pipe(temp_buffer);
         while (pipe >> tokens)
         {
             col_ctr = static_cast<int>(temp_buffer.find(tokens));
-
             if(pass1 == true && (col_ctr >= begin && col_ctr < end)){
                 tc_count++;
                 token_list[tc_count].token = lexstr;
@@ -297,17 +298,14 @@ void parse(const char *filename, Pitt_token *token_list)
                 token_list[tc_count].type = P_STR;
                 pass1 = false;
             }
-
             else if(ignore_words > 0 && (col_ctr >= begin && col_ctr < end)){
                 ignore_words--;
             }
-
             if(ignore_words == 0 || col_ctr < begin || col_ctr > end){
                 tc_count++;
                 token_list[tc_count].token = tokens;
                 token_list[tc_count].r = line;
                 token_list[tc_count].c = col_ctr;
-
                 if (isnum(tokens))
                 {
                     token_list[tc_count].type = P_INT;
@@ -323,6 +321,7 @@ void parse(const char *filename, Pitt_token *token_list)
 
     file.close();
 }
+
 
 int EXPECT_THEN(int current, Pitt_token *list, const size_t &size)
 {
@@ -359,7 +358,7 @@ int EXPECT_END(int current, Pitt_token *list, const size_t &size, stack<PittType
     int delay = 0;
     for (; current < static_cast<int>(size); current++)
     {
-        if (list[current].type == P_IF || list[current].type == P_WHILE)
+        if (list[current].type == P_DEF || list[current].type == P_IF || list[current].type == P_WHILE)
         {
             delay++;
         }
@@ -398,6 +397,34 @@ int EXPECT_END(int current, Pitt_token *list, const size_t &size, stack<PittType
     return location;
 }
 
+int EXPECT_ONLY_BEGIN(int current, Pitt_token *list, const size_t &size)
+{
+    int location = -1;
+    current++;
+
+    int delay = 0;
+    for (; current < static_cast<int>(size); current++)
+    {
+        if (list[current].type == P_DEF)
+        {
+            delay++;
+        }
+        else if (list[current].type == P_BEGIN)
+        {
+            if (delay == 0)
+            {
+                location = current;
+                break;
+            }
+            else
+            {
+                delay--;
+            }
+        }
+    }
+    return location;
+}
+
 int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
 {
     int location = -1;
@@ -406,12 +433,9 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
     int delay = 0;
     for (; current < static_cast<int>(size); current++)
     {
-        if (list[current].type == P_IF || list[current].type == P_WHILE)
+        if (list[current].type == P_IF || list[current].type == P_WHILE || list[current].type == P_DEF)
         {
-            if (delay == 0)
-            {
-                delay++;
-            }
+            delay++;
         }
         else if (list[current].type == P_END)
         {
@@ -449,6 +473,15 @@ void simulate_file(const char *filename, Pitt_token *token_list)
     // Memory Handling
     byte memory[MEM_CAP] = {};
     size_t free_ptr = 0;
+
+    // Definitions (Not Macros | Not Exactly Functions Either)
+    struct Tuple<string, int, Pitt_token> definition[size] =
+    {
+    };
+    int tp = 0;
+    stack<int> return_stack;
+    bool inDef = false;
+    stack<bool> end_behaviour;
 
     int j = {};
     while (j < size)
@@ -541,7 +574,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                 }
 
                 numeric_stack.push(free_ptr);
-                free_ptr += pusher;
+                free_ptr = pusher;
                 numeric_stack.push(free_ptr);
             }
 
@@ -1109,46 +1142,54 @@ void simulate_file(const char *filename, Pitt_token *token_list)
 
             if (token_list[j].type == P_THEN)
             {
-                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE))
+                if (numeric_stack.size() > 0)
                 {
-                    if (ptoken.top() == P_WHILE)
+                    if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE))
                     {
-                        wcon.push(static_cast<bool>(numeric_stack.top()));
+                        if (ptoken.top() == P_WHILE)
+                        {
+                            wcon.push(static_cast<bool>(numeric_stack.top()));
+                        }
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `then` keyword" << endl;
+                        break;
+                    }
+
+                    int jmp = EXPECT_END(j, token_list, size, ptoken);
+                    if (jmp == -1)
+                    {
+                        if (ptoken.top() == P_IF)
+                        {
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `if` statement" << endl;
+                        }
+                        else if (ptoken.top() == P_WHILE)
+                        {
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `while` statement" << endl;
+                        }
+                        break;
+                    }
+
+                    CondEncounter = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    if (CondEncounter == true)
+                    {
+                    }
+                    else if (CondEncounter == false)
+                    {
+                        j = jmp;
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `BOOL` but found `INT`" << endl;
+                        break;
                     }
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `then` keyword" << endl;
-                    break;
-                }
-
-                int jmp = EXPECT_END(j, token_list, size, ptoken);
-                if (jmp == -1)
-                {
-                    if (ptoken.top() == P_IF)
-                    {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `if` statement" << endl;
-                    }
-                    else if (ptoken.top() == P_WHILE)
-                    {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `while` statement" << endl;
-                    }
-                    break;
-                }
-
-                CondEncounter = numeric_stack.top();
-                numeric_stack.pop();
-
-                if (CondEncounter == true)
-                {
-                }
-                else if (CondEncounter == false)
-                {
-                    j = jmp;
-                }
-                else
-                {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `BOOL` but found `INT`" << endl;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `BOOL` but found `NONE`" << endl;
                     break;
                 }
             }
@@ -1208,9 +1249,118 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                 }
             }
 
+            // TODO: Underconst
+            if (token_list[j].type == P_WORD)
+            {
+                bool isValid = false;
+                struct Tuple<string, int, Pitt_token> def_loc =
+                {
+                };
+                for (auto k : definition)
+                {
+                    if (k.first == token_list[j].token)
+                    {
+                        def_loc = k;
+                        isValid = true;
+                        break;
+                    }
+                }
+
+                if (!isValid)
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown word found `" << token_list[j].token << "`" << endl;
+                    exit(1);
+                }
+                else
+                {
+                    return_stack.push(j);
+                    j = def_loc.second;
+                    ptoken.push(P_DEF);
+                }
+            }
+
+            if (token_list[j].type == P_DEF)
+            {
+                inDef = true;
+                ptoken.push(P_DEF);
+                int begVerifier = EXPECT_ONLY_BEGIN(j, token_list, size);
+
+                if (begVerifier == -1)
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the `BODY` of the definition to be marked with `begin` KEYWORD" << endl;
+                    break;
+                }
+
+                if (token_list[j + 1].type == P_WORD)
+                {
+                    j++;
+                    bool isCopy = false;
+                    struct Tuple<string, int, Pitt_token> firstDef =
+                    {
+                    };
+
+                    for (auto p : definition)
+                    {
+                        if (p.first == token_list[j].token)
+                        {
+                            firstDef = p;
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: redefinition of `" << token_list[j].token << "`" << endl;
+                        cout << filename << ":" << firstDef.third.r << ":" << firstDef.third.c << ": NOTE: first declared here" << endl;
+                        break;
+                    }
+                    else
+                    {
+                        definition[tp].first = token_list[j].token;
+                        definition[tp].second = begVerifier;
+                        definition[tp].third = token_list[j];
+                        tp++;
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: definition `NAME` can only be of type `WORD`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_BEGIN)
+            {
+                if (!ptoken.empty())
+                {
+                    if (ptoken.top() == P_DEF)
+                    {
+                        int endVerifier = EXPECT_ONLY_END(j, token_list, size);
+                        if (endVerifier == -1)
+                        {
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this definition" << endl;
+                            break;
+                        }
+                        end_behaviour.push(inDef);
+                        if (inDef == true)
+                        {
+                            inDef = false;
+                            j = endVerifier;
+                        }
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `begin` keyword" << endl;
+                    break;
+                }
+            }
+            // TODO: Underconst
+
             if (token_list[j].type == P_END)
             {
-                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE))
+                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE || ptoken.top() == P_DEF))
                 {
                     if (ptoken.top() == P_WHILE)
                     {
@@ -1224,6 +1374,23 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                             wloc.pop();
                         }
                     }
+
+                    if (ptoken.top() == P_DEF)
+                    {
+                        if (!return_stack.empty())
+                        {
+                            if (end_behaviour.top() == false || end_behaviour.empty())
+                            {
+                                j = return_stack.top();
+                                return_stack.pop();
+                            }
+                            else
+                            {
+                                end_behaviour.pop();
+                            }
+                        }
+                    }
+
                     ptoken.pop();
                 }
                 else
@@ -1251,7 +1418,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
             {
                 if (!numeric_stack.empty())
                 {
-                    cout << numeric_stack.top() << endl;
+                    cout << numeric_stack.top();
                     numeric_stack.pop();
                 }
                 else
@@ -1259,11 +1426,6 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: Too few arguments to function `[int: data] print`" << endl;
                     break;
                 }
-            }
-            if (token_list[j].type == P_UNDEF)
-            {
-                cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid word found `" << token_list[j].token << "`" << endl;
-                exit(1);
             }
         }
         j += 1;

@@ -1,0 +1,12 @@
+# ---- Multiplication Table ----
+
+0 while dup 10 <= then
+    0 while dup 10 <= then
+        over over * print 
+        1 + 
+    end
+    drop 
+    1 +
+end drop
+
+

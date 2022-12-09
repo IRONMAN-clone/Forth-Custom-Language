@@ -55,10 +55,11 @@ typedef enum {
     P_FUNC_PUTS,
     P_FUNC_PUTC,
     P_FUNC_WRITE,
+    P_DEF,
+    P_BEGIN,
     P_WORD, // Used as Variable names too and for macros too
 
     P_COMMENT,
-    P_UNDEF,
     P_EOT
 }PittType;
 
@@ -104,7 +105,10 @@ void init_map()
     usable_map["-rot"] = P_NROT;
     usable_map["nip"] = P_NIP;
     usable_map["%"] = P_PER;
+    usable_map["def"] = P_DEF;
+    usable_map["begin"] = P_BEGIN;
 }
+
 
 typedef struct Token {
     int r{},c{};
@@ -114,6 +118,13 @@ typedef struct Token {
     // String Error Injection
     bool unescaped{};
 }Pitt_token;
+
+template <typename A,typename B,typename C>
+struct Tuple {
+    A first;
+    B second; 
+    C third;
+};
 
 
 #endif

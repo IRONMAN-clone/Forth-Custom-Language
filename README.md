@@ -44,4 +44,11 @@ begin to end in byte stack and dumps them to stdout                             
 *Located at ./examples/*
 
 # NOTE
-*Our basic type checking is done in RUNTIME*
+*Removed the newline printing from `print` function*
+*Modified the parser a bit*
+
+# DEF 
+*def name begin* 
+    *body*
+*end*
+**NOTE: def is not `MACRO` nor `FUNCTION` it is just a variation of `MACRO` and `FUNCTION` , functions will be more defined in our pitt language**

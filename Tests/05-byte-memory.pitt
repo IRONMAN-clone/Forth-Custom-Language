@@ -1,0 +1,32 @@
+# ---  Byte Memory ---
+
+addr(i8) 97 over over !i8
+addr(i8) 1 + 98       !i8 
+addr(i8) 2 + 99       !i8
+
+addr(i8) 4 puts
+
+over over 1 + !i8
+addr(i8)  1 + over 2 + !i8
+addr(i8)  2 + over 3 + !i8
+
+addr(i8) 4 puts
+
+addr(i8) 99 !i8
+addr(i8) putc
+
+# 32 ASCII Code for - SPACE
+addr(i8) 32 !i8 
+addr(i8)   putc
+
+# ---- Syscall ----
+addr(i8) 97      !i8
+addr(i8) 1 + 98  !i8
+addr(i8) 2 + 99  !i8
+addr(i8) 3 + 100 !i8
+
+4 # count
+addr(i8) # buf
+2  # Filedescriptor 
+1  # Syscall Number
+write
