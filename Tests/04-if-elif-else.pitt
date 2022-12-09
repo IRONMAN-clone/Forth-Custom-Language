@@ -1,0 +1,11 @@
+if 2 1 + 4 = then
+    1 print
+elif 2 1 + 5 = then 
+    2 print
+elif 2 1 + 3 = then
+    3 print
+elif 2 1 + 2 = then
+    4 print
+else 
+    5 print
+end
