@@ -45,8 +45,7 @@ the stack                                                                       
 | !i32       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
 | @i32       | `a b -- a`       | Pops location from the stack and reads the location from  
 byte stack                                                                                   |
-| addr(i32)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
-the stack                                                                                    |
+| addr(i32)  | ` -- a`          | Pushes the beginning of the byte stack usable location into the stack  |
 
 # Examples
 *Located at ./examples/*
