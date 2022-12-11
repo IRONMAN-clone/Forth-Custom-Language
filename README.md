@@ -37,18 +37,29 @@ Hello World
 byte stack                                                                                   |
 | addr(i8)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
 the stack                                                                                    |
-| puts      | `a b -- `        | Pops two items from the stack(end and begin) then reads from
-begin to end in byte stack and dumps them to stdout                                          |
+| !i16       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
+| @i16       | `a b -- a`       | Pops location from the stack and reads the location from  
+byte stack                                                                                   |
+| addr(i16)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
+the stack                                                                                    |
+| !i32       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
+| @i32       | `a b -- a`       | Pops location from the stack and reads the location from  
+byte stack                                                                                   |
+| addr(i32)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
+the stack                                                                                    |
 
 # Examples
 *Located at ./examples/*
 
 # NOTE
-*Removed the newline printing from `print` function*
-*Modified the parser a bit*
+*Removed the newline printing from `print` function & Modified the parser a bit & Added upto 32bit memory support*
+
 
 # DEF 
 *def name begin* 
     *body*
 *end*
 **NOTE: def is not `MACRO` nor `FUNCTION` it is just a variation of `MACRO` and `FUNCTION` , functions will be more defined in our pitt language**
+
+# SYSCALLS
+*write [writes byte into stdout from memory]                                                      exit  [exits current program with an error-code]                                                     pause [pauses the current terminal]*

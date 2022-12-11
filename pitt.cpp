@@ -1,19 +1,14 @@
 // TODO: LIST
-// TODO: Add Linux Syscalls Support
-// TODO: Fix a little bit of parsing to add // to strings
-// TODO: Add different value stack-pointers (@i16,@i32) [@i64 is OPTIONAL we could implement it in pitt too]
-// TODO: Add float support [Not as main] (@f32,@f64) [OPTIONAL]
-// TODO: Add operation type provider (Semi Generics Support) for operations with different type of variables
-//       Syntax = "value value <Type to operate stack>(if none provided @i32 is operated) <operator>"
-// TODO: Add argc and argv support
-// TODO: Add variable support
-// TODO: Add function support (Add `main` entry check if possible) [INFO: Arguments are not directly defined they are popped from the respective stack]
-// TODO: Add return statements and return type check for functions
-// TODO: Add variable scope if it is possible
-// TODO: Add dynamic memory which can be released [maybe!?] (Keyword: `memory name size end`)
+// TODO: Support Hex and Binary and Octal Numbers
+// TODO: Add Linux Syscalls Support + Windows Syscalls Support
+// TODO: Support argc and argv
+// TODO: Add C-String and String-functions
+// TODO: Add variable support (in other word -> `bind` keyword)
+// TODO: Add function support (Verify `main` if possible) + Return Keyword + Function Scope
+// TODO: Add Dynamic Memory support (Heap-Allocated Memory) [`alloc` keyword]
 // TODO: Add `import` keyword
 // TODO: Add Structures
-// TODO: Add functions 
+// TODO: Fix PARSER to support -> "Hello \\"
 
 #include <iostream>
 #include <fstream>
@@ -23,15 +18,14 @@
 using namespace std;
 
 #define PITT_EXT "pitt"
-#define RECURSION_LIMIT 1000
 
 void help()
 {
-    cout << "PITT: " << endl;
+    cout << "USAGE: " << endl;
     cout << "pitt (command) <filename> [subcmd]" << endl;
     cout << "COMMAND: " << endl;
-    cout << "       run     simulates the file" << endl;
-    cout << "       dump    dumps all the tokens" << endl;
+    cout << "       build     simulates the file" << endl;
+    cout << "       dump     dumps all the tokens" << endl;
     cout << "SUBCMD: " << endl;
     cout << "       timeit  Times exection time" << endl;
 }
@@ -152,7 +146,6 @@ int parse_words_in_text(string &text)
 }
 
 // FIXME: ADD SUPPORT FOR `\\"`
-// TODO: Apply a little fix 
 void parse(const char *filename, Pitt_token *token_list)
 {
     ifstream file{filename};
@@ -162,6 +155,7 @@ void parse(const char *filename, Pitt_token *token_list)
     int tc_count = -1;
     int col_ctr = 0;
     int line = {};
+    string counter_buffer = "";
 
     while (getline(file, temp_buffer))
     {
@@ -170,12 +164,18 @@ void parse(const char *filename, Pitt_token *token_list)
         bool encountered = false;
 
         istringstream serve(temp_buffer);
-        string counter_buffer = temp_buffer;
+        counter_buffer = temp_buffer;
+
         while (serve >> tokens)
         {
             // We have to change counter_buffer[col_ctr] to some random trash numbers
-            // becase .find() will never check for duplicates and will keep getting the 
-            // duplicates 
+            // becase .find() will never check for duplicates and will keep getting the
+            // duplicates
+            if (tokens == "#")
+            {
+                break;
+            }
+
             col_ctr = static_cast<int>(counter_buffer.find(tokens));
             counter_buffer[col_ctr] = -1;
 
@@ -183,7 +183,7 @@ void parse(const char *filename, Pitt_token *token_list)
             {
                 waitfor--;
                 if (waitfor == 0)
-                    encountered = false;  
+                    encountered = false;
             }
 
             if (tokens[0] == '"' && encountered == false)
@@ -262,66 +262,12 @@ void parse(const char *filename, Pitt_token *token_list)
                 {
                     token_list[tc_count].type = fetch_type(tokens);
                 }
-            }          
-        }
-    }
-
-    /*
-    while (getline(file, temp_buffer))
-    {
-        line++;
-        int begin = {}, end = {} , ignore_words = {};
-        bool pass1 = false;
-        string lexstr = {};
-        begin = static_cast<int>(temp_buffer.find('"'));
-        if (begin != -1)
-        {
-            for (end = begin + 1; end < temp_buffer.size(); end++)
-            {
-                if (temp_buffer[end] == '"' && temp_buffer[end-1] != '\\'){
-                    pass1 = true;
-                    lexstr = temp_buffer.substr(begin+1,end-1);
-                    ignore_words = parse_words_in_text(lexstr);
-                    break;
-                }
-            }
-        }
-        istringstream pipe(temp_buffer);
-        while (pipe >> tokens)
-        {
-            col_ctr = static_cast<int>(temp_buffer.find(tokens));
-            if(pass1 == true && (col_ctr >= begin && col_ctr < end)){
-                tc_count++;
-                token_list[tc_count].token = lexstr;
-                token_list[tc_count].r = line;
-                token_list[tc_count].c = begin;
-                token_list[tc_count].type = P_STR;
-                pass1 = false;
-            }
-            else if(ignore_words > 0 && (col_ctr >= begin && col_ctr < end)){
-                ignore_words--;
-            }
-            if(ignore_words == 0 || col_ctr < begin || col_ctr > end){
-                tc_count++;
-                token_list[tc_count].token = tokens;
-                token_list[tc_count].r = line;
-                token_list[tc_count].c = col_ctr;
-                if (isnum(tokens))
-                {
-                    token_list[tc_count].type = P_INT;
-                }
-                else
-                {
-                    token_list[tc_count].type = fetch_type(tokens);
-                }
             }
         }
     }
-    */
 
     file.close();
 }
-
 
 int EXPECT_THEN(int current, Pitt_token *list, const size_t &size)
 {
@@ -460,10 +406,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
     stack<int> numeric_stack = {};
     const size_t size = words_count(filename);
 
-    // Comment Handling Variables
-    bool isComment = false;
-    int PreviousLine = 0;
-
+    // COMMENTS are not even PARSED
     // If/While handling
     int CondEncounter = {};
     stack<PittType> ptoken;
@@ -473,6 +416,10 @@ void simulate_file(const char *filename, Pitt_token *token_list)
     // Memory Handling
     byte memory[MEM_CAP] = {};
     size_t free_ptr = 0;
+    short byte16Memory[MEM_CAP] = {};
+    size_t free_ptr_16 = 0;
+    int byte32Memory[MEM_CAP] = {};
+    size_t free_ptr_32 = 0;
 
     // Definitions (Not Macros | Not Exactly Functions Either)
     struct Tuple<string, int, Pitt_token> definition[size] =
@@ -486,19 +433,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
     int j = {};
     while (j < size)
     {
-        if (token_list[j].type == P_COMMENT)
-        {
-            PreviousLine = token_list[j].r;
-            isComment = true;
-        }
-
-        else if (isComment == true && (token_list[j].r > PreviousLine))
-        {
-            isComment = false;
-            PreviousLine = 0;
-        }
-
-        if (isComment == false && token_list[j].type != P_EOT)
+        if (token_list[j].type != P_EOT)
         {
             if (token_list[j].type == P_INT)
             {
@@ -517,7 +452,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                 bool last_esc = false;
                 size_t pusher = free_ptr;
 
-                size_t j = 0;
+                int j = 0;
                 while (j < raw.size())
                 {
                     if (raw[j] == '\\')
@@ -1008,6 +943,106 @@ void simulate_file(const char *filename, Pitt_token *token_list)
             }
 
             // TODO: Underconstruction
+            if (token_list[j].type == P_FUNC_PAUSE)
+            {
+                char c;
+                cin >> c;
+            }
+
+            if (token_list[j].type == P_FUNC_EXIT)
+            {
+                if (numeric_stack.size() > 0)
+                {
+                    int errcode = numeric_stack.top();
+                    numeric_stack.pop();
+                    exit(errcode);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no exit-code provided for `exit` SYSCALL" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_ADDR32)
+            {
+                numeric_stack.push(static_cast<int>(free_ptr_32));
+            }
+
+            if (token_list[j].type == P_DEREF32)
+            {
+                if (!numeric_stack.empty())
+                {
+                    int loc = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    numeric_stack.push(byte32Memory[loc]);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no `PTR` provided to dereference from `I32` memory" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_PUSH32)
+            {
+                if (numeric_stack.size() > 1)
+                {
+                    int data = numeric_stack.top();
+                    numeric_stack.pop();
+                    int loc = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    byte32Memory[loc] = data;
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `PTR` and `DATA` to store to `I32` memory" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_ADDR16)
+            {
+                numeric_stack.push(static_cast<int>(free_ptr_16));
+            }
+
+            if (token_list[j].type == P_DEREF16)
+            {
+                if (!numeric_stack.empty())
+                {
+                    int loc = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    numeric_stack.push(byte16Memory[loc]);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no `PTR` provided to dereference from `I16` memory" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_PUSH16)
+            {
+                if (numeric_stack.size() > 1)
+                {
+                    int data = numeric_stack.top();
+                    numeric_stack.pop();
+                    int loc = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    byte16Memory[loc] = data;
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `PTR` and `DATA` to store to `I16` memory" << endl;
+                    break;
+                }
+            }
+            // TODO: Underwork
+
             if (token_list[j].type == P_ADDR8)
             {
                 numeric_stack.push(static_cast<int>(free_ptr));
@@ -1142,23 +1177,25 @@ void simulate_file(const char *filename, Pitt_token *token_list)
 
             if (token_list[j].type == P_THEN)
             {
+                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE))
+                {
+                    if (ptoken.top() == P_WHILE)
+                    {
+                        wcon.push(static_cast<bool>(numeric_stack.top()));
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `then` keyword" << endl;
+                    break;
+                }
+
                 if (numeric_stack.size() > 0)
                 {
-                    if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE))
-                    {
-                        if (ptoken.top() == P_WHILE)
-                        {
-                            wcon.push(static_cast<bool>(numeric_stack.top()));
-                        }
-                    }
-                    else
-                    {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `then` keyword" << endl;
-                        break;
-                    }
-
                     int jmp = EXPECT_END(j, token_list, size, ptoken);
-                    if (jmp == -1)
+                    int jmp2 = EXPECT_ONLY_END(j, token_list, size);
+
+                    if (jmp == -1 || jmp2 == -1)
                     {
                         if (ptoken.top() == P_IF)
                         {
@@ -1342,6 +1379,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                             cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this definition" << endl;
                             break;
                         }
+
                         end_behaviour.push(inDef);
                         if (inDef == true)
                         {
@@ -1430,6 +1468,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
         }
         j += 1;
     }
+    // TODO: WE'LL BE DOING TYPE-CHECK SO THIS WILL BE SHIFTED THERE
     if (numeric_stack.size() > 0)
     {
         cout << filename << ":" << token_list[j - 1].r << ":" << token_list[j - 1].c << ": ERROR: unhandled data on stack" << endl;
@@ -1462,7 +1501,7 @@ int main(int args, char **argv)
             check_file_ext(argv[2]);
             check_file_val(argv[2]);
 
-            if (strcmp(argv[1], "run") == 0)
+            if (strcmp(argv[1], "build") == 0)
             {
                 printf("[INFO] Simulating file: `%s`\n\n", argv[2]);
                 Pitt_token *tokens = new Pitt_token[words_count(argv[2])];
@@ -1479,7 +1518,7 @@ int main(int args, char **argv)
             }
             else
             {
-                printf("pitt:\033[0;31m fatal error:\033[0;37m invalid operation type provided `%s`!\n", argv[1]);
+                printf("pitt:\033[0;31m fatal error:\033[0;37m invalid operation type provided `%s`\n", argv[1]);
                 help();
             }
         }

@@ -50,11 +50,19 @@ typedef enum {
     P_ADDR8,
     P_DEREF8,
     P_PUSH8,
+    P_ADDR16,
+    P_DEREF16,
+    P_PUSH16,
+    P_ADDR32,
+    P_DEREF32,
+    P_PUSH32,
 
     P_FUNC_PRINT,
     P_FUNC_PUTS,
     P_FUNC_PUTC,
     P_FUNC_WRITE,
+    P_FUNC_EXIT,
+    P_FUNC_PAUSE,
     P_DEF,
     P_BEGIN,
     P_WORD, // Used as Variable names too and for macros too
@@ -67,11 +75,19 @@ std::map<std::string,PittType> usable_map;
 
 void init_map()
 {
+    usable_map["pause"] = P_FUNC_PAUSE;
+    usable_map["exit"] = P_FUNC_EXIT;
     usable_map["write"] = P_FUNC_WRITE;
     usable_map["putc"] = P_FUNC_PUTC;
     usable_map["addr(i8)"] = P_ADDR8;
     usable_map["@i8"] = P_DEREF8;
     usable_map["!i8"] = P_PUSH8;
+    usable_map["addr(i16)"] = P_ADDR16;
+    usable_map["@i16"] = P_DEREF16;
+    usable_map["!i16"] = P_PUSH16;
+    usable_map["addr(i32)"] = P_ADDR32;
+    usable_map["@i32"] = P_DEREF32;
+    usable_map["!i32"] = P_PUSH32;
     usable_map["!="] = P_NE;
     usable_map[">"] = P_G;
     usable_map["<"] = P_L;
@@ -115,6 +131,8 @@ typedef struct Token {
     std::string token{};
     PittType type{};
 
+    // Better End Injection
+    PittType associatedType = {};
     // String Error Injection
     bool unescaped{};
 }Pitt_token;
