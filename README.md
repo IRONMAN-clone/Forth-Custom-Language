@@ -43,21 +43,15 @@ PTR - pointer is also INT but it is specialised type
 # Memory 
 | Keyword   | Signature        | Operation                                                   |
 | ----      | ----             | ----                                                        |
-| !i8       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
-| @i8       | `a b -- a`       | Pops location from the stack and reads the location from  
-byte stack                                                                                   |
-| addr(i8)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
-the stack                                                                                    |
-| !i16       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
-| @i16       | `a b -- a`       | Pops location from the stack and reads the location from  
-byte stack                                                                                   |
-| addr(i16)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
-the stack                                                                                    |
-| !i32       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
-| @i32       | `a b -- a`       | Pops location from the stack and reads the location from  
-byte stack                                                                                   |
-| addr(i32)  | ` -- a`          | Pushes the beginning of the byte stack usable location into
-the stack                                                                                    |
+| `!i8`       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack                                                     |
+| `@i8`       | `a b -- a`       | Pops location from the stack and reads the location from  byte stack|
+| `addr(i8)`  | ` -- a`          | Pushes the beginning of the byte stack usable location intothe stack|
+| `!i16`       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack|
+| `@i16`       | `a b -- a`       | Pops location from the stack and reads the location from  byte stack|
+| `addr(i16)`  | ` -- a`          | Pushes the beginning of the byte stack usable location intothe stack|
+| `!i32`       | `a b c -- a`     | Pops two items from the stack (data and location) and stores the data at the given location of byte stack        |
+| `@i32`       | `a b -- a`       | Pops location from the stack and reads the location from  byte stack|
+| `addr(i32)`  | ` -- a`          | Pushes the beginning of the byte stack usable location intothe stack |
 
 # Examples
 *Located at ./examples/*
