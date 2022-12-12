@@ -25,9 +25,9 @@ void help()
     cout << "pitt (command) <filename> [subcmd]" << endl;
     cout << "COMMAND: " << endl;
     cout << "       build     simulates the file" << endl;
-    cout << "       dump     dumps all the tokens" << endl;
+    cout << "       dump      dumps all the tokens" << endl;
     cout << "SUBCMD: " << endl;
-    cout << "       timeit  Times exection time" << endl;
+    cout << "       timeit    checks the time of execution" << endl;
 }
 
 // DONE: Added a padding of P_EOT (refererring to END_OF_TOKEN) to manage extra spaces on words_count()
@@ -401,7 +401,7 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
 
 #define MEM_CAP 140000
 
-void simulate_file(const char *filename, Pitt_token *token_list)
+void simulate_file(const char *filename, Pitt_token *token_list, const int &argc, char **argv)
 {
     stack<int> numeric_stack = {};
     const size_t size = words_count(filename);
@@ -429,6 +429,10 @@ void simulate_file(const char *filename, Pitt_token *token_list)
     stack<int> return_stack;
     bool inDef = false;
     stack<bool> end_behaviour;
+
+    // C-String
+    my_stack c_string;
+    int argv_ptr = 0;
 
     int j = {};
     while (j < size)
@@ -1115,6 +1119,145 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                 }
             }
 
+            if (token_list[j].type == P_FUNC_WRITELINE)
+            {
+                if (c_string.size() > 0)
+                {
+                    cout << c_string.top();
+                    c_string.pop();
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] writeline`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_FUNC_STRDUP)
+            {
+                if (c_string.size() > 0)
+                {
+                    c_string.push(c_string.top());
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] strdup`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_CSTRDROP)
+            {
+                if (c_string.size() > 0)
+                {
+                    c_string.pop();
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provieded to `STRDROP` manipulator" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_CSTRLEN)
+            {
+                if (c_string.size() > 0)
+                {
+                    numeric_stack.push(c_string.top().size());
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] cstrlen`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_ARGC)
+            {
+                numeric_stack.push(argc);
+            }
+
+            if (token_list[j].type == P_ARGV)
+            {
+                if (numeric_stack.size() > 0)
+                {
+                    if(numeric_stack.top() >= 0 && numeric_stack.top() < argc){
+                        c_string.push(argv[numeric_stack.top()]);
+                        numeric_stack.pop();
+                    }
+                    else{
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: trying to read out of bounds" << endl;
+                        break;
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `ARGV` keyword" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_FUNC_CSTR_TO_STR)
+            {
+                if (c_string.size() > 0)
+                {
+                    int begin = free_ptr;
+                    int end = c_string.top().size();
+
+                    for (size_t i = 0; i < end; i++)
+                        memory[begin++] = c_string.top()[i];
+                    c_string.pop();
+                    numeric_stack.push(free_ptr);
+                    free_ptr = begin;
+                    numeric_stack.push(free_ptr + end);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] cstr-to-str`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_FUNC_STRCMP)
+            {
+                if (c_string.size() > 1)
+                {
+                    string B = c_string.top();
+                    c_string.pop();
+                    string A = c_string.top();
+                    c_string.pop();
+                    numeric_stack.push(B == A);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data str: data] strcmp`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_FUNC_STR_TO_CSTR)
+            {
+                if (numeric_stack.size() > 1)
+                {
+                    int end = numeric_stack.top();
+                    numeric_stack.pop();
+                    int begin = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    string load_str_from_mem = "";
+                    for (; begin <= end; begin++)
+                    {
+                        load_str_from_mem += memory[begin];
+                    }
+                    c_string.push(load_str_from_mem);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[int: begin int: end] str-to-cstr`" << endl;
+                    break;
+                }
+            }
+
             if (token_list[j].type == P_FUNC_WRITE)
             {
                 if (numeric_stack.size() > 3)
@@ -1305,7 +1448,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
 
                 if (!isValid)
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown word found `" << token_list[j].token << "`" << endl;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown token found `" << token_list[j].token << "`" << endl;
                     exit(1);
                 }
                 else
@@ -1320,16 +1463,17 @@ void simulate_file(const char *filename, Pitt_token *token_list)
             {
                 inDef = true;
                 ptoken.push(P_DEF);
-                int begVerifier = EXPECT_ONLY_BEGIN(j, token_list, size);
-
-                if (begVerifier == -1)
-                {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the `BODY` of the definition to be marked with `begin` KEYWORD" << endl;
-                    break;
-                }
 
                 if (token_list[j + 1].type == P_WORD)
                 {
+                    int begVerifier = EXPECT_ONLY_BEGIN(j, token_list, size);
+
+                    if (begVerifier == -1)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the body of the label to be marked with `begin` KEYWORD" << endl;
+                        break;
+                    }
+
                     j++;
                     bool isCopy = false;
                     struct Tuple<string, int, Pitt_token> firstDef =
@@ -1348,7 +1492,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
 
                     if (isCopy)
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: redefinition of `" << token_list[j].token << "`" << endl;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: redefinition of label `" << token_list[j].token << "`" << endl;
                         cout << filename << ":" << firstDef.third.r << ":" << firstDef.third.c << ": NOTE: first declared here" << endl;
                         break;
                     }
@@ -1362,8 +1506,16 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: definition `NAME` can only be of type `WORD`" << endl;
-                    break;
+                    if (token_list[j + 1].type != P_WORD && token_list[j + 1].type != P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the label name to be `WORD` but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
+                        break;
+                    }
+                    if (token_list[j + 1].type == P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this label but found `NONE`" << endl;
+                        break;
+                    }
                 }
             }
 
@@ -1376,7 +1528,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
                         int endVerifier = EXPECT_ONLY_END(j, token_list, size);
                         if (endVerifier == -1)
                         {
-                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this definition" << endl;
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this label" << endl;
                             break;
                         }
 
@@ -1471,7 +1623,7 @@ void simulate_file(const char *filename, Pitt_token *token_list)
     // TODO: WE'LL BE DOING TYPE-CHECK SO THIS WILL BE SHIFTED THERE
     if (numeric_stack.size() > 0)
     {
-        cout << filename << ":" << token_list[j - 1].r << ":" << token_list[j - 1].c << ": ERROR: unhandled data on stack" << endl;
+        cout << filename << ":" << token_list[j - 1].r << ":" << token_list[j - 1].c << ": ERROR: unhandled data on stack <ElementType.INT:" << numeric_stack.size() << ">" << endl;
         exit(0);
     }
 }
@@ -1508,7 +1660,7 @@ int main(int args, char **argv)
                 for (size_t j = 0; j < words_count(argv[2]); j++)
                     tokens[j].type = P_EOT;
                 parse(argv[2], tokens);
-                simulate_file(argv[2], tokens);
+                simulate_file(argv[2], tokens, args, argv);
             }
             else if (strcmp(argv[1], "dump") == 0)
             {

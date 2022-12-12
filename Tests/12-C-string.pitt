@@ -1,0 +1,19 @@
+# basic C-String added
+"hello\n" str-to-cstr  
+
+strdup
+
+writeline 
+writeline 
+
+"hello" str-to-cstr 
+"bye"   str-to-cstr 
+
+if strcmp then 
+    "Yes\n" put s
+else
+    "No\n"  puts
+end
+
+"hello" str-to-cstr
+cstr-to-str puts 

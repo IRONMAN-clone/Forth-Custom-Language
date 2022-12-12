@@ -1,0 +1,35 @@
+def @i64 begin
+    7 + 0
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap 1 - swap
+    8 shl over @i8 + swap drop 
+end
+
+def !i64 begin
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr swap 1 + swap
+    over over 255 band !i8 8 shr drop drop 
+end
+
+
+def ptr begin addr(i8) end
+
+
+1 2 while over 4000000 < then
+    if over 2 % 0 = then
+        over ptr @i64 + ptr swap !i64 
+    end 
+    swap over +
+end
+
+ptr @i64 print drop drop 

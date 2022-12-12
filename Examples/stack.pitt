@@ -1,0 +1,36 @@
+def stack-ptr begin 0 @i16                        end
+def top       begin stack-ptr 1 - @i32            end
+def push-ptr  begin stack-ptr 1 + 0 swap !i16     end
+def pop-ptr   begin stack-ptr 1 - 0 swap !i16     end
+def push      begin stack-ptr swap !i32  push-ptr end
+
+def stack-empty begin
+    if stack-ptr 0 > then
+       0
+    else
+       1
+    end
+end
+
+def stack-print begin
+      while stack-ptr 0 != then
+      		top print
+      	  "\n" puts
+      	   pop-ptr
+      end
+end
+
+
+1 push
+2 push
+3 push
+4 push
+5 push
+
+stack-print 
+
+if stack-empty then
+   "Yes it is empty!\n" puts
+else
+   "No it is not empty!\n" puts
+end

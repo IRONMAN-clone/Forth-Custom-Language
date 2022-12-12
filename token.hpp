@@ -5,14 +5,15 @@
 #include <map>
 
 // Some data definitions
-#define byte signed char
+#define byte unsigned char
 
 // Porth Tokens
-typedef enum {
+typedef enum
+{
     P_INT = 0,
     P_STR,
     P_CHR,
-    P_FLT, // TODO: Will be implemented with pointers syntax: @f32 
+    P_FLT, // TODO: Will be implemented with pointers syntax: @f32
 
     P_PLUS,
     P_MIN,
@@ -66,15 +67,102 @@ typedef enum {
     P_DEF,
     P_BEGIN,
     P_WORD, // Used as Variable names too and for macros too
-
+    P_FUNC_STR_TO_CSTR,
+    P_FUNC_WRITELINE,
+    P_FUNC_STRCMP,
+    P_FUNC_STRDUP,
+    P_FUNC_CSTR_TO_STR,
+    P_ARGC,
+    P_ARGV,
+    P_CSTRDROP,
+    P_CSTRLEN,
     P_COMMENT,
     P_EOT
-}PittType;
+} PittType;
 
-std::map<std::string,PittType> usable_map;
+std::map<std::string, PittType> usable_map;
+std::string usable_names[P_EOT] =
+    {
+        "INT",
+        "STR",
+        "CHAR",
+        "OPERATOR",
+        "OPERATOR",
+        "OPERATOR",
+        "OPERATOR",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "OPERATOR",
+        "OPERATOR",
+        "OPERATOR",
+        "OPERATOR",
+        "OPERATOR",
+        "OPERATOR",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "OPERATOR",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
+        "SYSCALL",
+        "SYSCALL",
+        "SYSCALL",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
+        "KEYWORD",
+        "KEYWORD",
+        "FUNCTION",
+        "FUNCTION"
+};
+
+class my_stack : public std::stack<std::string>
+{
+public:
+    using std::stack<std::string>::c; // expose the container
+};
 
 void init_map()
 {
+    usable_map["cstrlen"] = P_CSTRLEN;
+    usable_map["strdrop"] = P_CSTRDROP;
+    usable_map["argv"] = P_ARGV;
+    usable_map["argc"] = P_ARGC;
+    usable_map["cstr-to-str"] = P_FUNC_CSTR_TO_STR;
+    usable_map["strcmp"] = P_FUNC_STRCMP;
+    usable_map["strdup"] = P_FUNC_STRDUP;
+    usable_map["writeline"] = P_FUNC_WRITELINE;
+    usable_map["str-to-cstr"] = P_FUNC_STR_TO_CSTR;
     usable_map["pause"] = P_FUNC_PAUSE;
     usable_map["exit"] = P_FUNC_EXIT;
     usable_map["write"] = P_FUNC_WRITE;
@@ -113,9 +201,9 @@ void init_map()
     usable_map["then"] = P_THEN;
     usable_map["while"] = P_WHILE;
     usable_map["else"] = P_ELSE;
-    usable_map["dup"] = P_DUP; 
-    usable_map["swap"] = P_SWAP; 
-    usable_map["drop"] = P_DROP; 
+    usable_map["dup"] = P_DUP;
+    usable_map["swap"] = P_SWAP;
+    usable_map["drop"] = P_DROP;
     usable_map["over"] = P_OVER;
     usable_map["rot"] = P_ROT;
     usable_map["-rot"] = P_NROT;
@@ -125,9 +213,9 @@ void init_map()
     usable_map["begin"] = P_BEGIN;
 }
 
-
-typedef struct Token {
-    int r{},c{};
+typedef struct Token
+{
+    int r{}, c{};
     std::string token{};
     PittType type{};
 
@@ -135,14 +223,14 @@ typedef struct Token {
     PittType associatedType = {};
     // String Error Injection
     bool unescaped{};
-}Pitt_token;
+} Pitt_token;
 
-template <typename A,typename B,typename C>
-struct Tuple {
+template <typename A, typename B, typename C>
+struct Tuple
+{
     A first;
-    B second; 
+    B second;
     C third;
 };
-
 
 #endif

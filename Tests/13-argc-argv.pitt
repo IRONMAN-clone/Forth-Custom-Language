@@ -1,0 +1,7 @@
+# ARGC ARGV 
+0 while dup argc < then
+    "argv[" puts dup print "] = " puts 
+    dup argv writeline 
+    "\n" puts
+    1 + 
+end drop 
