@@ -1,1 +1,0 @@
-                hasString = false; 
