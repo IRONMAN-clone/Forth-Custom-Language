@@ -16,4 +16,5 @@ else
 end
 
 "hello" str-to-cstr
-cstr-to-str puts 
+cstr-to-str 
+puts 

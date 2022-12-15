@@ -1,0 +1,14 @@
+def O_WR begin 1 end 
+
+"./Tests/foo.txt" O_WR open-file 
+
+if 0 = then
+    "Alas! can not open file!\n" puts 
+    1 exit 
+else
+    "Hello World\n" str-to-cstr write-file
+    "Bye World\n"   str-to-cstr write-file 
+    "Foo , Bar , Baz\n" str-to-cstr write-file  
+end
+
+close-file 

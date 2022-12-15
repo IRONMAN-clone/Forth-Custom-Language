@@ -1,4 +1,6 @@
 # First hello world
+def stdout begin 1 end 
+def stderr begin 2 end 
 
 addr(i8) 0 + 72 !i8
 addr(i8) 1 + 101 !i8
@@ -14,4 +16,4 @@ addr(i8) 10 + 108 !i8
 addr(i8) 11 + 100 !i8
 addr(i8) 12 + 10 !i8
 
-12 addr(i8) 1 1 write
+12 addr(i8) stdout write

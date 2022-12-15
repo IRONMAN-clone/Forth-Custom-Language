@@ -76,6 +76,14 @@ typedef enum
     P_ARGV,
     P_CSTRDROP,
     P_CSTRLEN,
+    P_FUNC_READ,
+    P_GETPID,
+    P_OPENFILE,
+    P_GETLINE,
+    P_GETC,
+    P_CLOSEF,
+    P_READ_WORD,
+    P_WRITEFILE,
     P_COMMENT,
     P_EOT
 } PittType;
@@ -143,6 +151,14 @@ std::string usable_names[P_EOT] =
         "KEYWORD",
         "KEYWORD",
         "FUNCTION",
+        "FUNCTION",
+        "SYSCALL",
+        "SYSCALL",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
+        "FUNCTION",
         "FUNCTION"
 };
 
@@ -154,6 +170,14 @@ public:
 
 void init_map()
 {
+    usable_map["write-file"] = P_WRITEFILE;
+    usable_map["open-file"] = P_OPENFILE;    
+    usable_map["read-line"] = P_GETLINE;
+    usable_map["read-chr"] = P_GETC;
+    usable_map["close-file"] = P_CLOSEF;
+    usable_map["read-word"] = P_READ_WORD;
+
+    usable_map["getpid"] = P_GETPID;    
     usable_map["cstrlen"] = P_CSTRLEN;
     usable_map["strdrop"] = P_CSTRDROP;
     usable_map["argv"] = P_ARGV;
@@ -166,6 +190,7 @@ void init_map()
     usable_map["pause"] = P_FUNC_PAUSE;
     usable_map["exit"] = P_FUNC_EXIT;
     usable_map["write"] = P_FUNC_WRITE;
+    usable_map["read"] = P_FUNC_READ;
     usable_map["putc"] = P_FUNC_PUTC;
     usable_map["addr(i8)"] = P_ADDR8;
     usable_map["@i8"] = P_DEREF8;

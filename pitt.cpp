@@ -1,6 +1,6 @@
 // TODO: LIST
+// TODO: Add Linux Syscalls Support
 // TODO: Support Hex and Binary and Octal Numbers
-// TODO: Add Linux Syscalls Support + Windows Syscalls Support
 // TODO: Support argc and argv
 // TODO: Add C-String and String-functions
 // TODO: Add variable support (in other word -> `bind` keyword)
@@ -9,12 +9,19 @@
 // TODO: Add `import` keyword
 // TODO: Add Structures
 // TODO: Fix PARSER to support -> "Hello \\"
+// TODO: Add `macro!` keyword and `inmport` keyword
+// TODO: Add Writting-to-FILE support (Added Reading-Support but Syscalls still don't support)
+// TODO: Add syscalls to support C-FILE Structure (Currently Files are handled using C++ Structure)
+
+// NOTE: Can read and write but opening files and reading and writting to it is not support
+// Actually not all syscalls are implemented to its max
 
 #include <iostream>
 #include <fstream>
 #include <bits/stdc++.h>
 #include "./token.hpp"
 #include <stack>
+#include <unistd.h>
 using namespace std;
 
 #define PITT_EXT "pitt"
@@ -399,7 +406,7 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
     return location;
 }
 
-#define MEM_CAP 140000
+#define MEM_CAP 240000
 
 void simulate_file(const char *filename, Pitt_token *token_list, const int &argc, char **argv)
 {
@@ -433,6 +440,10 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
     // C-String
     my_stack c_string;
     int argv_ptr = 0;
+
+    // Custom-File-Handling (rather than syscalls)
+    fstream user_stream = {};
+    bool hasValidFile = false;
 
     int j = {};
     while (j < size)
@@ -1181,11 +1192,13 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
             {
                 if (numeric_stack.size() > 0)
                 {
-                    if(numeric_stack.top() >= 0 && numeric_stack.top() < argc){
+                    if (numeric_stack.top() >= 0 && numeric_stack.top() < argc)
+                    {
                         c_string.push(argv[numeric_stack.top()]);
                         numeric_stack.pop();
                     }
-                    else{
+                    else
+                    {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: trying to read out of bounds" << endl;
                         break;
                     }
@@ -1202,14 +1215,17 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 if (c_string.size() > 0)
                 {
                     int begin = free_ptr;
-                    int end = c_string.top().size();
+                    int end = c_string.top().size() - 1;
 
-                    for (size_t i = 0; i < end; i++)
-                        memory[begin++] = c_string.top()[i];
+                    for (size_t i = 0; i <= static_cast<size_t>(end); i++)
+                    {
+                        memory[begin] = c_string.top()[i];
+                        begin++;
+                    }
                     c_string.pop();
                     numeric_stack.push(free_ptr);
-                    free_ptr = begin;
-                    numeric_stack.push(free_ptr + end);
+                    free_ptr = begin; // here we are removing the null-terminating-character from getting printed
+                    numeric_stack.push(free_ptr);
                 }
                 else
                 {
@@ -1245,7 +1261,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     numeric_stack.pop();
 
                     string load_str_from_mem = "";
-                    for (; begin <= end; begin++)
+                    for (; begin < end; begin++)
                     {
                         load_str_from_mem += memory[begin];
                     }
@@ -1258,14 +1274,205 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
             }
 
-            if (token_list[j].type == P_FUNC_WRITE)
+            if (token_list[j].type == P_GETPID)
             {
-                if (numeric_stack.size() > 3)
+                numeric_stack.push(getpid());
+            }
+
+            if (token_list[j].type == P_READ_WORD)
+            {
+                if (hasValidFile == true)
                 {
-                    int syscallnum = numeric_stack.top();
+                    if (!user_stream.eof())
+                    {
+                        string txt = "";
+                        user_stream >> txt;
+                        c_string.push(txt);
+                        numeric_stack.push(true);
+                    }
+                    else
+                    {
+                        numeric_stack.push(false);
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no valid file is open to read" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_CLOSEF)
+            {
+                if (hasValidFile == true)
+                {
+                    user_stream.close();
+                    hasValidFile = false;
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file] close`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_GETC)
+            {
+                if (hasValidFile == true)
+                {
+                    if (!user_stream.eof())
+                    {
+                        string txt = "";
+                        txt = user_stream.get();
+                        c_string.push(txt);
+                        numeric_stack.push(true);
+                    }
+                    else
+                    {
+                        numeric_stack.push(false);
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file] read-chr" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_GETLINE)
+            {
+                if (hasValidFile == true)
+                {
+                    if (!user_stream.eof())
+                    {
+                        string txt = "";
+                        getline(user_stream, txt);
+                        c_string.push(txt);
+                        numeric_stack.push(true);
+                    }
+                    else
+                    {
+                        numeric_stack.push(false);
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file] read-line`" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_OPENFILE)
+            {
+                if (numeric_stack.size() > 2)
+                {
+                    int mode = numeric_stack.top();
+                    numeric_stack.pop();
+                    int buf_end = numeric_stack.top();
+                    numeric_stack.pop();
+                    int buf_begin = numeric_stack.top();
                     numeric_stack.pop();
 
-                    int arg1 = numeric_stack.top();
+                    if (hasValidFile == true)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": NOTE: trying to open another file without closing the previous file" << endl;
+                    }
+
+                    string fname = {};
+                    for (int n = buf_begin; n < buf_end; n++)
+                        fname += memory[n];
+
+                    if (mode == 0)
+                    {
+                        user_stream.open(fname, ios_base::in);
+                    }
+                    else if (mode == 1)
+                    {
+                        user_stream.open(fname, ios_base::out);
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown mode provided to function `[int: buf-begin int: buf-end int: mode] open-file`" << endl;
+                        break;
+                    }
+
+                    if (user_stream.is_open())
+                    {
+                        hasValidFile = true;
+                    }
+                    else
+                    {
+                        hasValidFile = false;
+                    }
+                    numeric_stack.push(hasValidFile);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[int: buf-begin int: buf-end int: mode] open-file`" << endl;
+                    break;
+                }
+            }
+            
+            if(token_list[j].type == P_WRITEFILE)
+            {
+                if(!hasValidFile)
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file str: line] write`" << endl;
+                    break;
+                }
+                else
+                {
+                    if(c_string.size() > 0)
+                    {
+                        user_stream << c_string.top();
+                        c_string.pop();
+                    }
+                    else{
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[file: file str: line] write-file`" << endl;
+                        break;
+                    }
+                }
+            }
+
+            if (token_list[j].type == P_FUNC_READ)
+            {
+                if (numeric_stack.size() > 0)
+                {
+                    int fd = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    if (fd == 3)
+                    {
+                        string data = {};
+                        cin >> data;
+
+                        size_t p = 0;
+                        size_t cnt = 0;
+                        for (p = free_ptr; p < (free_ptr + data.size()); p++)
+                            memory[p] = data[cnt++];
+
+                        numeric_stack.push(free_ptr);
+                        free_ptr = p;
+                        numeric_stack.push(free_ptr);
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown filedescriptor provided " << fd << " to function [int: fd] read" << endl;
+                        break;
+                    }
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: fd] read" << endl;
+                    break;
+                }
+            }
+
+            if (token_list[j].type == P_FUNC_WRITE)
+            {
+                if (numeric_stack.size() > 2)
+                {
+                    int fd = numeric_stack.top();
                     numeric_stack.pop();
 
                     int arg2 = numeric_stack.top();
@@ -1274,33 +1481,25 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     int arg3 = numeric_stack.top();
                     numeric_stack.pop();
 
-                    if (syscallnum == 1)
+                    if (fd == 1)
                     {
-                        if (arg1 == 1)
-                        {
-                            for (int p = arg2; p < arg2 + arg3; p++)
-                                cout << memory[p];
-                        }
-                        else if (arg1 == 2)
-                        {
-                            for (int p = arg2; p < arg2 + arg3; p++)
-                                cerr << memory[p];
-                        }
-                        else
-                        {
-                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown FileDescriptor provided  " << arg1 << " to function [int: arg3 int: arg2 int: arg1 int: syscall] write" << endl;
-                            break;
-                        }
+                        for (int p = arg2; p < (arg2+arg3); p++)
+                            cout << memory[p];
+                    }
+                    else if (fd == 2)
+                    {
+                        for (int p = arg2; p < (arg2+arg3); p++)
+                            cerr << memory[p];
                     }
                     else
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown syscall number provided  " << syscallnum << " to function [int: arg3 int: arg2 int: arg1 int: syscall] write" << endl;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown filedescriptor provided " << fd << " to function [int: buf-end int: buf-begin int: fd] write" << endl;
                         break;
                     }
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: arg3 int: arg2 int: arg1 int: syscall] write" << endl;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: buf-end int: buf-begin int: fd] write" << endl;
                     break;
                 }
             }

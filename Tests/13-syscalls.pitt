@@ -1,0 +1,17 @@
+def stdout begin 1 end 
+def stderr begin 2 end 
+def stdin  begin 3 end 
+
+"pauts\n" swap stdout write 
+"sec\n"   swap stdout write 
+
+"Your Name: " puts 
+stdin read 
+str-to-cstr
+"Hello , :) " puts
+writeline 
+"\n" puts
+
+
+"PID of this process: " puts 
+getpid print 
