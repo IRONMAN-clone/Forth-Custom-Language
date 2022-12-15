@@ -20,6 +20,8 @@ Pitt is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programmin
 - [ ]  All syscalls 
 - [ ]  Compiled
 - [ ]  Optimized
+
+
 **NOTE: Milestones are development logs not selling points**
 
   
