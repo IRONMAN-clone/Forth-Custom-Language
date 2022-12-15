@@ -1,1 +1,0 @@
-pitt build ./foo.pitt 
