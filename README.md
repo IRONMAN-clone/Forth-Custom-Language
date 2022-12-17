@@ -11,15 +11,17 @@ Pitt is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programmin
 ##### WRITE is added 
 
 # Milestones 
-[x]  Turing Complete 
-[x]  Stack Based
-[x]  Simulated
-[x]  Native String and C-String system
-[x]  C++ File-System
-[ ]  C/Syscall File-System
-[ ]  All syscalls 
-[ ]  Compiled
-[ ]  Optimized
+- [x]  Turing Complete 
+- [x]  Stack Based
+- [x]  Simulated
+- [x]  Native String and C-String system
+- [x]  C++ File-System
+- [ ]  C/Syscall File-System
+- [ ]  All syscalls 
+- [ ]  Compiled
+- [ ]  Optimized
+
+
 **NOTE: Milestones are development logs not selling points**
 
   
