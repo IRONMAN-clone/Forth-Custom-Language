@@ -1,0 +1,22 @@
+def O_RD begin 0 end 
+def O_WR begin 1 end  
+
+def True begin 1 end 
+def False begin 0 end
+
+"./Tests/14-Concatenation.pitt" over over str-to-cstr 
+O_RD open-file
+
+if False = then 
+    "Alas! Could not open the file " puts writeline 
+    1 exit 
+else 
+    while read-line True = then 
+        writeline 
+        "\n" puts
+    end
+
+    "\n \n" puts
+end
+
+close-file

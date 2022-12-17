@@ -311,7 +311,7 @@ int EXPECT_END(int current, Pitt_token *list, const size_t &size, stack<PittType
     int delay = 0;
     for (; current < static_cast<int>(size); current++)
     {
-        if (list[current].type == P_DEF || list[current].type == P_IF || list[current].type == P_WHILE)
+        if (list[current].type == P_DEF || list[current].type == P_CONST || list[current].type == P_IF || list[current].type == P_WHILE)
         {
             delay++;
         }
@@ -386,7 +386,7 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
     int delay = 0;
     for (; current < static_cast<int>(size); current++)
     {
-        if (list[current].type == P_IF || list[current].type == P_WHILE || list[current].type == P_DEF)
+        if (list[current].type == P_IF || list[current].type == P_CONST || list[current].type == P_WHILE || list[current].type == P_DEF)
         {
             delay++;
         }
@@ -405,6 +405,7 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
     }
     return location;
 }
+
 
 #define MEM_CAP 240000
 
@@ -429,7 +430,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
     size_t free_ptr_32 = 0;
 
     // Definitions (Not Macros | Not Exactly Functions Either)
-    struct Tuple<string, int, Pitt_token> definition[size] =
+    struct Tuple<string, int, Pitt_token> definition[size/5] =
     {
     };
     int tp = 0;
@@ -444,6 +445,10 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
     // Custom-File-Handling (rather than syscalls)
     fstream user_stream = {};
     bool hasValidFile = false;
+
+    // Const-defs
+    ConstDef constDefs[size/5];
+    int const_buf = -1;
 
     int j = {};
     while (j < size)
@@ -460,7 +465,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 if (token_list[j].unescaped == true)
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unescaped string literal found" << endl;
-                    break;
+                    exit;
                 }
 
                 string &raw = token_list[j].token;
@@ -541,8 +546,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `PLUS` operator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to PLUS operator" << endl;
+                    exit(1);
                 }
             }
 
@@ -559,8 +564,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `MINUS` operator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to MINUS operator" << endl;
+                    exit;
                 }
             }
 
@@ -577,8 +582,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `MUL` operator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to MUL operator" << endl;
+                    exit(1);
                 }
             }
 
@@ -595,8 +600,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `DIV` operator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to DIV operator" << endl;
+                    exit;
                 }
             }
 
@@ -613,8 +618,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `BOR` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to BOR keyword" << endl;
+                    exit(1);
                 }
             }
 
@@ -631,8 +636,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `BAND` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to BAND keyword" << endl;
+                    exit;
                 }
             }
 
@@ -647,8 +652,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `NOT` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to NOT keyword" << endl;
+                    exit(1);
                 }
             }
 
@@ -665,8 +670,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `SHL` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to SHL keyword" << endl;
+                    exit;
                 }
             }
 
@@ -683,8 +688,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `SHR` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to SHR keyword" << endl;
+                    exit(1);
                 }
             }
 
@@ -701,8 +706,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `XOR` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to XOR keyword" << endl;
+                    exit;
                 }
             }
 
@@ -720,7 +725,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `!=` operator" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -738,7 +743,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `=` operator" << endl;
-                    break;
+                    exit;
                 }
             }
 
@@ -756,7 +761,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `<` operator" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -774,7 +779,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `>` operator" << endl;
-                    break;
+                    exit;
                 }
             }
 
@@ -792,7 +797,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `>=` operator" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -810,7 +815,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `<=` operator" << endl;
-                    break;
+                    exit;
                 }
             }
 
@@ -822,8 +827,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `DUP` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to DUP manipulator" << endl;
+                    exit(1);
                 }
             }
 
@@ -841,8 +846,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `SWAP` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to SWAP manipulator" << endl;
+                    exit;
                 }
             }
 
@@ -854,8 +859,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `DROP` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to DROP manipulator" << endl;
+                    exit(1);
                 }
             }
 
@@ -874,8 +879,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `OVER` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to OVER manipulator" << endl;
+                    exit;
                 }
             }
 
@@ -896,8 +901,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `ROT` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to ROT manipulator" << endl;
+                    exit(1);
                 }
             }
 
@@ -918,8 +923,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `-ROT` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to -ROT manipulator" << endl;
+                    exit;
                 }
             }
 
@@ -934,8 +939,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `NIP` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to NIP manipulator" << endl;
+                    exit(1);
                 }
             }
 
@@ -952,8 +957,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `MODULO` OPERATOR" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to MODULO OPERATOR" << endl;
+                    exit;
                 }
             }
 
@@ -974,8 +979,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no exit-code provided for `exit` SYSCALL" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no exit-code provided for EXIT syscall" << endl;
+                    exit(1);
                 }
             }
 
@@ -995,8 +1000,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no `PTR` provided to dereference from `I32` memory" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a PTR to dereference from i32 memory" << endl;
+                    exit;
                 }
             }
 
@@ -1013,8 +1018,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `PTR` and `DATA` to store to `I32` memory" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a PTR and DATA to store in i32 memory" << endl;
+                    exit(1);
                 }
             }
 
@@ -1034,8 +1039,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no `PTR` provided to dereference from `I16` memory" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a PTR to dereference from i16 memory" << endl;
+                    exit(1);
                 }
             }
 
@@ -1052,8 +1057,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `PTR` and `DATA` to store to `I16` memory" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a PTR and DATA to store in i16 memory" << endl;
+                    exit(1);
                 }
             }
             // TODO: Underwork
@@ -1074,8 +1079,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no `PTR` provided to dereference from `I8` memory" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a PTR to dereference from i8 memory" << endl;
+                    exit(1);
                 }
             }
 
@@ -1092,8 +1097,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `PTR` and `DATA` to store to `I8` memory" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a PTR and DATA to store in i8 memory" << endl;
+                    exit(1);
                 }
             }
 
@@ -1111,8 +1116,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[int: begin int: end] puts`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: begin int: end] puts" << endl;
+                    exit(1);
                 }
             }
 
@@ -1125,8 +1130,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[int: loc] putc`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: loc] putc" << endl;
+                    exit(1);
                 }
             }
 
@@ -1139,8 +1144,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] writeline`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [str: data] writeline" << endl;
+                    exit(1);
                 }
             }
 
@@ -1152,8 +1157,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] strdup`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [str: data] strdup" << endl;
+                    exit(1);
                 }
             }
 
@@ -1165,8 +1170,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provieded to `STRDROP` manipulator" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to STRDROP manipulator" << endl;
+                    exit(1);
                 }
             }
 
@@ -1179,7 +1184,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] cstrlen`" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -1200,13 +1205,13 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     else
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: trying to read out of bounds" << endl;
-                        break;
+                        exit(1);
                     }
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to `ARGV` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments provided to ARGV keyword" << endl;
+                    exit(1);
                 }
             }
 
@@ -1229,8 +1234,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data] cstr-to-str`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [str: data] cstr-to-str" << endl;
+                    exit(1);
                 }
             }
 
@@ -1246,8 +1251,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[str: data str: data] strcmp`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [str: data str: data] strcmp" << endl;
+                    exit(1);
                 }
             }
 
@@ -1269,8 +1274,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[int: begin int: end] str-to-cstr`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: begin int: end] str-to-cstr" << endl;
+                    exit(1);
                 }
             }
 
@@ -1298,7 +1303,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: no valid file is open to read" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -1312,7 +1317,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file] close`" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -1335,7 +1340,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file] read-chr" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -1358,7 +1363,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file] read-line`" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -1393,7 +1398,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     else
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown mode provided to function `[int: buf-begin int: buf-end int: mode] open-file`" << endl;
-                        break;
+                        exit(1);
                     }
 
                     if (user_stream.is_open())
@@ -1409,7 +1414,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[int: buf-begin int: buf-end int: mode] open-file`" << endl;
-                    break;
+                    exit(1);
                 }
             }
             
@@ -1418,7 +1423,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 if(!hasValidFile)
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file str: line] write`" << endl;
-                    break;
+                    exit(1);
                 }
                 else
                 {
@@ -1429,7 +1434,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     }
                     else{
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[file: file str: line] write-file`" << endl;
-                        break;
+                        exit(1);
                     }
                 }
             }
@@ -1444,7 +1449,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     if (fd == 3)
                     {
                         string data = {};
-                        cin >> data;
+                        getline(cin,data);
 
                         size_t p = 0;
                         size_t cnt = 0;
@@ -1458,13 +1463,13 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     else
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown filedescriptor provided " << fd << " to function [int: fd] read" << endl;
-                        break;
+                        exit(1);
                     }
                 }
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: fd] read" << endl;
-                    break;
+                    exit(1);
                 }
             }
 
@@ -1494,13 +1499,13 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     else
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown filedescriptor provided " << fd << " to function [int: buf-end int: buf-begin int: fd] write" << endl;
-                        break;
+                        exit(1);
                     }
                 }
                 else
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function [int: buf-end int: buf-begin int: fd] write" << endl;
-                    break;
+                    exit(1);
                 }
             }
             // TODO: Underconstruction
@@ -1512,8 +1517,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
                 if (location == -1)
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete `IF` statement definition expected a `then`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete IF statement definition expected a THEN keyword" << endl;
+                    exit(1);
                 }
             }
 
@@ -1528,8 +1533,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `then` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of THEN keyword" << endl;
+                    exit(1);
                 }
 
                 if (numeric_stack.size() > 0)
@@ -1541,13 +1546,13 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     {
                         if (ptoken.top() == P_IF)
                         {
-                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `if` statement" << endl;
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an END of this IF statement" << endl;
                         }
                         else if (ptoken.top() == P_WHILE)
                         {
-                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `while` statement" << endl;
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an END of this WHILE statement" << endl;
                         }
-                        break;
+                        exit(1);
                     }
 
                     CondEncounter = numeric_stack.top();
@@ -1562,14 +1567,14 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     }
                     else
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `BOOL` but found `INT`" << endl;
-                        break;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a BOOL but found INT" << endl;
+                        exit(1);
                     }
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a `BOOL` but found `NONE`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a BOOL but found NONE" << endl;
+                    exit(1);
                 }
             }
             if (token_list[j].type == P_ELIF)
@@ -1579,8 +1584,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `elif` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of ELIF keyword" << endl;
+                    exit(1);
                 }
 
                 int jmp = EXPECT_END(j, token_list, size, ptoken);
@@ -1588,14 +1593,14 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
                 if (location == -1)
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete `ELIF` statement definition expected a `then`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete ELIF statement definition expected a THEN keyword" << endl;
+                    exit(1);
                 }
 
                 if (jmp == -1)
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this `elif` statement" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an END of this ELIF statement" << endl;
+                    exit(1);
                 }
 
                 if (CondEncounter == false)
@@ -1614,8 +1619,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `else` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of ELSE keyword" << endl;
+                    exit(1);
                 }
 
                 if (CondEncounter == false)
@@ -1628,35 +1633,60 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
             }
 
+            
+
             // TODO: Underconst
             if (token_list[j].type == P_WORD)
             {
-                bool isValid = false;
-                struct Tuple<string, int, Pitt_token> def_loc =
+                bool isValidconst = false;
+                bool isValiddef = false;                
+                int cnt = -1;
+
+                for (auto k : constDefs)
                 {
-                };
-                for (auto k : definition)
-                {
-                    if (k.first == token_list[j].token)
+                    cnt++;
+                    if (k.name == token_list[j].token)
                     {
-                        def_loc = k;
-                        isValid = true;
+                        isValidconst = true;
                         break;
                     }
                 }
 
-                if (!isValid)
+                int cnt2 = -1;
+                for (auto k : definition)
+                {
+                    cnt2++;
+                    if (k.first == token_list[j].token)
+                    {
+                        isValiddef = true;
+                        break;
+                    }
+                }
+
+                if (!isValidconst && !isValiddef)
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown token found `" << token_list[j].token << "`" << endl;
                     exit(1);
                 }
                 else
                 {
-                    return_stack.push(j);
-                    j = def_loc.second;
-                    ptoken.push(P_DEF);
+                    if(isValiddef){
+                        return_stack.push(j);
+                        j = definition[cnt2].second;
+                        ptoken.push(P_DEF);
+                    }
+                    else if(isValidconst){
+                        if(constDefs[cnt].type_value == INT){
+                            numeric_stack.push(constDefs[cnt].iVal);
+                        }
+                        else if(constDefs[cnt].type_value == STR)
+                        {
+                            c_string.push(constDefs[cnt].str_val);    
+                        }
+                    }
                 }
             }
+            
 
             if (token_list[j].type == P_DEF)
             {
@@ -1667,23 +1697,47 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 {
                     int begVerifier = EXPECT_ONLY_BEGIN(j, token_list, size);
 
+                    
                     if (begVerifier == -1)
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the body of the label to be marked with `begin` KEYWORD" << endl;
-                        break;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the body of the label to be marked with BEGIN keyword" << endl;
+                        exit(1);
                     }
 
-                    j++;
-                    bool isCopy = false;
-                    struct Tuple<string, int, Pitt_token> firstDef =
+                    if(token_list[j+2].type != P_BEGIN)
                     {
-                    };
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown token found in initialization of label `" << token_list[j+1].token << "` `" << usable_names[token_list[j+2].type] << ": " << token_list[j+2].token << "`" << endl;
+                        exit(1);
+                    }
+
+                    bool isCopy = false;
+                    int cnt = -1;
+
+                    for(auto k : constDefs)
+                    {
+                        cnt++;
+                        if(k.name == token_list[j+1].token){
+                            isCopy = true;
+                            break;
+                        }
+                    }
+                    
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j+1].r << ":" << token_list[j+1].c << ": ERROR: redefinition of CONST `" << token_list[j+1].token << "`" << endl;
+                        cout << filename << ":" << constDefs[cnt].row << ":" << constDefs[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    } 
+
+                    j++;
+                    isCopy = false;
+                    cnt = -1;
 
                     for (auto p : definition)
                     {
+                        cnt++;
                         if (p.first == token_list[j].token)
                         {
-                            firstDef = p;
                             isCopy = true;
                             break;
                         }
@@ -1691,9 +1745,9 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
                     if (isCopy)
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: redefinition of label `" << token_list[j].token << "`" << endl;
-                        cout << filename << ":" << firstDef.third.r << ":" << firstDef.third.c << ": NOTE: first declared here" << endl;
-                        break;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: redefinition of LABEL `" << token_list[j].token << "`" << endl;
+                        cout << filename << ":" << definition[cnt].third.r << ":" << definition[cnt].third.c << ": NOTE: first declared here" << endl;
+                        exit(1);
                     }
                     else
                     {
@@ -1707,13 +1761,13 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 {
                     if (token_list[j + 1].type != P_WORD && token_list[j + 1].type != P_EOT)
                     {
-                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the label name to be `WORD` but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
-                        break;
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the label name to be WORD but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
+                        exit(1);
                     }
-                    if (token_list[j + 1].type == P_EOT)
+                    if(token_list[j+1].type == P_EOT)
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this label but found `NONE`" << endl;
-                        break;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this label but found NONE" << endl;
+                        exit(1);
                     }
                 }
             }
@@ -1727,8 +1781,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                         int endVerifier = EXPECT_ONLY_END(j, token_list, size);
                         if (endVerifier == -1)
                         {
-                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an `END` of this label" << endl;
-                            break;
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an END of this LABEL" << endl;
+                            exit(1);
                         }
 
                         end_behaviour.push(inDef);
@@ -1741,16 +1795,210 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `begin` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of BEGIN keyword" << endl;
+                    exit(1);
+                }
+            }
+
+            if (token_list[j].type == P_ASSERT)
+            {
+                if(numeric_stack.size() > 0 && c_string.size() > 0)
+                {
+                    if(numeric_stack.top() == true)
+                    {
+
+                    }
+                    else if(numeric_stack.top() == false)
+                    {
+                        cout << "AssertionError: " << c_string.top();
+                        exit(1);
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a BOOL but found INT" << endl;
+                        exit(1);
+                    }
+
+                    numeric_stack.pop();
+                    c_string.pop();
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: Too few arguments to ASSERT keyword" << endl;
+                    exit(1);
                 }
             }
             // TODO: Underconst
+            if (token_list[j].type == P_CONST)
+            {
+                if(!ptoken.empty() && ptoken.top() == P_CONST)
+                {
+                    cout << filename << ":" << token_list[j + 2].r << ":" << token_list[j + 2].c << ": ERROR: CONST definition inside of a CONST definition is not allowed" << endl;
+                    exit(1);
+                }
+
+                ptoken.push(P_CONST);
+                
+                if(token_list[j+1].type == P_WORD)
+                {
+                    if (token_list[j + 2].type != P_TP_INT && token_list[j + 2].type != P_TP_STR && token_list[j + 2].type != P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j + 2].r << ":" << token_list[j + 2].c << ": ERROR: expected the const type to be INT or STR but found `" << usable_names[token_list[j + 2].type] << ": " << token_list[j + 2].token << "`" << endl;
+                        exit(1);
+                    }
+                    if(token_list[j+2].type == P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a type to initialization this CONST but found NONE" << endl;
+                        exit(1);
+                    }
+
+                    if(EXPECT_ONLY_END(j,token_list,size) == -1)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an END of this CONST definition" << endl;
+                        exit(1);
+                    }
+
+                    /* Copy1 Checs */
+                    bool isCopy = false;
+                    int cnt = -1;
+
+                    for(auto k : constDefs)
+                    {
+                        cnt++;
+                        if(k.name == token_list[j+1].token){
+                            isCopy = true;
+                            break;
+                        }
+                    }
+                    
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j+1].r << ":" << token_list[j+1].c << ": ERROR: redefinition of CONST `" << token_list[j+1].token << "`" << endl;
+                        cout << filename << ":" << constDefs[cnt].row << ":" << constDefs[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    } 
+                    /* Copy2 checks */
+                    isCopy = false;
+                    cnt = -1;
+
+                    for (auto p : definition)
+                    {
+                        cnt++;
+                        if (p.first == token_list[j+1].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j+1].r << ":" << token_list[j+1].c << ": ERROR: redefinition of LABEL `" << token_list[j+1].token << "`" << endl;
+                        cout << filename << ":" << definition[cnt].third.r << ":" << definition[cnt].third.c << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    } 
+
+                    const_buf++;
+                    constDefs[const_buf].name = token_list[j+1].token; 
+                    j += 2;   
+
+                    if(token_list[j].type == P_TP_INT)
+                    {
+                        constDefs[const_buf].type_value = INT; 
+                    }
+                    else if(token_list[j].type == P_TP_STR)
+                    {
+                        constDefs[const_buf].type_value = STR;
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a type for this CONST definition" << endl;
+                        exit(1);
+                    }
+                    constDefs[const_buf].row = token_list[j].r;
+                    constDefs[const_buf].col = token_list[j].c;
+
+                    // Continueing
+                    /* 
+                    ConstDef newDef;
+                    newDef.name = token_list[j+1].token;
+                    j += 2;
+
+                    if(token_list[j].type == P_TP_INT)
+                    {
+                        newDef.type_value = INT; 
+                    }
+                    else if(token_list[j].type == P_TP_STR)
+                    {
+                        newDef.type_value = STR;
+                    }
+                    else
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a type for this constant" << endl;
+                        exit(1);
+                    }
+                    newDef.row = token_list[j].r;
+                    newDef.col = token_list[j].c;
+                    const_buf++;
+                    constDefs[const_buf] = newDef;
+                    */
+                }
+                else 
+                {
+                    if (token_list[j + 1].type != P_WORD && token_list[j + 1].type != P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the CONST name to be WORD but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
+                        exit(1);
+                    }
+                    if(token_list[j+1].type == P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this CONST but found NONE" << endl;
+                        exit(1);
+                    }
+                }
+            }
 
             if (token_list[j].type == P_END)
             {
-                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE || ptoken.top() == P_DEF))
+                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE || ptoken.top() == P_DEF
+                || ptoken.top() == P_CONST))
                 {
+                    // cout << ptoken.top(); 
+                    if(ptoken.top() == P_CONST)
+                    {
+                        if(constDefs[const_buf].type_value == INT)
+                        {
+                            if(numeric_stack.size() > 0){
+                                constDefs[const_buf].iVal = numeric_stack.top();
+                                numeric_stack.pop();
+                            }
+                            else
+                            {
+                                cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an INT for this const but found NONE" << endl;
+                                exit(1);
+                            }
+                        }
+                        else if(constDefs[const_buf].type_value == STR)
+                        {
+                                if(numeric_stack.size() > 1)
+                                {
+                                    int end = numeric_stack.top();
+                                    numeric_stack.pop();
+
+                                    int begin = numeric_stack.top();
+                                    numeric_stack.pop();
+
+                                    for(;begin < end; begin++)
+                                        constDefs[const_buf].str_val += memory[begin];
+                                }
+                                else
+                                {
+                                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an STR for this const but found NONE" << endl;
+                                    exit(1);
+                                }
+                        }
+                    }
+
                     if (ptoken.top() == P_WHILE)
                     {
                         if (!wcon.empty() && !wloc.empty())
@@ -1784,8 +2032,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of `end` keyword" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unexpected occurence of END keyword" << endl;
+                    exit(1);
                 }
             }
 
@@ -1793,10 +2041,10 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
             {
                 int location = EXPECT_THEN(j, token_list, size);
 
-                if (location == -1)
+                if (EXPECT_THEN(j, token_list, size) == -1)
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete `WHILE` statement definition expected a `then`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete WHILE statement definition expected THEN keyword" << endl;
+                    exit(1);
                 }
 
                 ptoken.push(P_WHILE);
@@ -1812,8 +2060,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
                 else
                 {
-                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: Too few arguments to function `[int: data] print`" << endl;
-                    break;
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: Too few arguments to function [int: data] print" << endl;
+                    exit(1);
                 }
             }
         }
@@ -1822,8 +2070,8 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
     // TODO: WE'LL BE DOING TYPE-CHECK SO THIS WILL BE SHIFTED THERE
     if (numeric_stack.size() > 0)
     {
-        cout << filename << ":" << token_list[j - 1].r << ":" << token_list[j - 1].c << ": ERROR: unhandled data on stack <ElementType.INT:" << numeric_stack.size() << ">" << endl;
-        exit(0);
+        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unhandled DATA on the stack <ElementType.INT:" << numeric_stack.size() << ">" << endl;
+        exit(1);
     }
 }
 void dump_file(const char *filename, const Pitt_token *token_list)
@@ -1855,8 +2103,8 @@ int main(int args, char **argv)
             if (strcmp(argv[1], "build") == 0)
             {
                 printf("[INFO] Simulating file: `%s`\n\n", argv[2]);
-                Pitt_token *tokens = new Pitt_token[words_count(argv[2])];
-                for (size_t j = 0; j < words_count(argv[2]); j++)
+                Pitt_token *tokens = new Pitt_token[words_count(argv[2]) + 1];
+                for (size_t j = 0; j <= words_count(argv[2]); j++)
                     tokens[j].type = P_EOT;
                 parse(argv[2], tokens);
                 simulate_file(argv[2], tokens, args, argv);

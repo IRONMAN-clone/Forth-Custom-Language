@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PITT_TOKEN_H
 #define PITT_TOKEN_H
 
@@ -6,6 +7,7 @@
 
 // Some data definitions
 #define byte unsigned char
+
 
 // Porth Tokens
 typedef enum
@@ -84,6 +86,11 @@ typedef enum
     P_CLOSEF,
     P_READ_WORD,
     P_WRITEFILE,
+
+    P_CONST,
+    P_TP_INT, 
+    P_TP_STR,
+    P_ASSERT,
     P_COMMENT,
     P_EOT
 } PittType;
@@ -142,6 +149,7 @@ std::string usable_names[P_EOT] =
         "SYSCALL",
         "KEYWORD",
         "KEYWORD",
+        "WORD",
         "KEYWORD",
         "FUNCTION",
         "FUNCTION",
@@ -159,7 +167,11 @@ std::string usable_names[P_EOT] =
         "FUNCTION",
         "FUNCTION",
         "FUNCTION",
-        "FUNCTION"
+        "FUNCTION",
+        "KEYWORD",
+        "TYPENAME",
+        "TYPENAME",
+        "KEYWORD"
 };
 
 class my_stack : public std::stack<std::string>
@@ -168,8 +180,18 @@ public:
     using std::stack<std::string>::c; // expose the container
 };
 
+typedef enum {
+    INT,
+    STR
+}TypeProvider;
+
 void init_map()
 {
+    usable_map["assert"] = P_ASSERT;
+    usable_map["const"] = P_CONST;
+    usable_map["int"] = P_TP_INT;
+    usable_map["str"] = P_TP_STR;
+
     usable_map["write-file"] = P_WRITEFILE;
     usable_map["open-file"] = P_OPENFILE;    
     usable_map["read-line"] = P_GETLINE;
@@ -242,10 +264,8 @@ typedef struct Token
 {
     int r{}, c{};
     std::string token{};
-    PittType type{};
+    uint8_t type{};
 
-    // Better End Injection
-    PittType associatedType = {};
     // String Error Injection
     bool unescaped{};
 } Pitt_token;
@@ -257,5 +277,15 @@ struct Tuple
     B second;
     C third;
 };
+
+typedef struct const_def{
+    int col,row;
+    int iVal;
+    uint8_t type_value;
+
+    std::string name; 
+    std::string str_val = "";
+
+}ConstDef;
 
 #endif

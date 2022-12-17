@@ -1,0 +1,21 @@
+# Constants are unchangeable (Unlike Variables)
+# Constants requires a type to be attached with them (Works as semi-var)
+# Constants cast the pitt-string to C-String (Which can be recasted into pitt-string)
+# For now only 2 types are there (int and str) ptr will be coming soon
+
+const A int 99 end 
+const B int 1  end 
+
+
+A B + print 
+"\n" puts 
+A print "\n" puts 
+B print "\n" puts 
+
+
+"----------------------------------\n" puts 
+const hello str "Hello-World , Bye-World\n" end 
+
+hello cstr-to-str puts
+hello cstr-to-str puts 
+

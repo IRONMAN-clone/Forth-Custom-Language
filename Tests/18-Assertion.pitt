@@ -1,0 +1,8 @@
+const Mangoes int 2 end 
+
+"Sorry, You can't have negative amount of mangoes LoL\n" str-to-cstr
+Mangoes 0 >= assert 
+
+
+34 35 + print 
+"\n" puts 

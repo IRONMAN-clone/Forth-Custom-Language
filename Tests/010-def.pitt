@@ -1,0 +1,13 @@
+# `def` acts as a `goto` definition
+def factorial begin
+    dup dup 1 - while dup 0 > then
+    	over over *
+	-rot
+	nip
+	1 -
+    end drop
+    "Factorial of " puts over print " is " puts print 
+    drop
+end 
+
+3 factorial
