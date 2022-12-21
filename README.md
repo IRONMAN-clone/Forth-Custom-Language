@@ -11,17 +11,15 @@ Pitt is a [Concatenative](https://en.wikipedia.org/wiki/Concatenative_programmin
 ##### WRITE is added 
 
 # Milestones 
-- [x]  Turing Complete 
-- [x]  Stack Based
-- [x]  Simulated
-- [x]  Native String and C-String system
-- [x]  C++ File-System
-- [ ]  C/Syscall File-System
-- [ ]  All syscalls 
-- [ ]  Compiled
-- [ ]  Optimized
-
-
+[x]  Turing Complete 
+[x]  Stack Based
+[x]  Simulated
+[x]  Native String and C-String system
+[x]  C++ File-System
+[ ]  C/Syscall File-System
+[ ]  All syscalls 
+[ ]  Compiled
+[ ]  Optimized
 **NOTE: Milestones are development logs not selling points**
 
   
@@ -82,12 +80,15 @@ PTR - pointer is also INT but it is specialised type
 *Removed the newline printing from `print` function & Modified the parser a bit & Added upto 32bit memory support*
 
 
-# DEF 
+# Def
 **NOTE: DEF is goto keyword from C/C++**
 
 
 # Const 
 **NOTE: Const is same as constants they can be initialized with 2 types (for now) int or str and they cast `str` to `cstr` which could be recasted later**
+
+# Memory
+**NOTE: Memory just reserves a memory of size (given) and gives it a name which on being called generates its beginning and size-offset onto the stack**
 
 # Assertion
 ##### Assertion takes 1 C-String as output string and 1 condition to make an assert 

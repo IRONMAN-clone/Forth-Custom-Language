@@ -1,0 +1,7 @@
+malloc int_Array 4 end 
+
+34 int_Array drop 2 !int         drop drop 
+35 int_Array swap 2 + swap !int  drop drop
+
+int_Array @int print 
+

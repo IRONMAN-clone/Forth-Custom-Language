@@ -9,3 +9,16 @@ elif 2 1 + 2 = then
 else 
     5 print
 end
+
+if 2 2 + 2 2 * = 3 3 + 3 3 * = and then
+   "Ye 1 \n" puts
+else
+   "Non 1 \n" puts
+end
+
+
+if 2 2 + 2 2 * = 3 3 + 3 3 * = or then
+   "Ye 2 \n" puts
+else
+   "Non 2 \n" puts
+end

@@ -1,20 +1,13 @@
 // TODO: LIST
 // TODO: Add Linux Syscalls Support
 // TODO: Support Hex and Binary and Octal Numbers
-// TODO: Support argc and argv
-// TODO: Add C-String and String-functions
 // TODO: Add variable support (in other word -> `bind` keyword)
 // TODO: Add function support (Verify `main` if possible) + Return Keyword + Function Scope
-// TODO: Add Dynamic Memory support (Heap-Allocated Memory) [`alloc` keyword]
-// TODO: Add `import` keyword
 // TODO: Add Structures
 // TODO: Fix PARSER to support -> "Hello \\"
-// TODO: Add `macro!` keyword and `inmport` keyword
-// TODO: Add Writting-to-FILE support (Added Reading-Support but Syscalls still don't support)
+// TODO: Add `macro!` keyword and `import` keyword
 // TODO: Add syscalls to support C-FILE Structure (Currently Files are handled using C++ Structure)
 
-// NOTE: Can read and write but opening files and reading and writting to it is not support
-// Actually not all syscalls are implemented to its max
 
 #include <iostream>
 #include <fstream>
@@ -311,7 +304,7 @@ int EXPECT_END(int current, Pitt_token *list, const size_t &size, stack<PittType
     int delay = 0;
     for (; current < static_cast<int>(size); current++)
     {
-        if (list[current].type == P_DEF || list[current].type == P_CONST || list[current].type == P_IF || list[current].type == P_WHILE)
+        if (list[current].type == P_DEF || list[current].type == P_MEM || list[current].type == P_CONST || list[current].type == P_IF || list[current].type == P_WHILE)
         {
             delay++;
         }
@@ -386,7 +379,7 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
     int delay = 0;
     for (; current < static_cast<int>(size); current++)
     {
-        if (list[current].type == P_IF || list[current].type == P_CONST || list[current].type == P_WHILE || list[current].type == P_DEF)
+        if (list[current].type == P_IF || list[current].type == P_MEM || list[current].type == P_CONST || list[current].type == P_WHILE || list[current].type == P_DEF)
         {
             delay++;
         }
@@ -405,7 +398,6 @@ int EXPECT_ONLY_END(int current, Pitt_token *list, const size_t &size)
     }
     return location;
 }
-
 
 #define MEM_CAP 240000
 
@@ -430,7 +422,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
     size_t free_ptr_32 = 0;
 
     // Definitions (Not Macros | Not Exactly Functions Either)
-    struct Tuple<string, int, Pitt_token> definition[size/5] =
+    struct Tuple<string, int, Pitt_token> definition[size / 5] =
     {
     };
     int tp = 0;
@@ -447,8 +439,12 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
     bool hasValidFile = false;
 
     // Const-defs
-    ConstDef constDefs[size/5];
+    ConstDef constDefs[size / 5];
     int const_buf = -1;
+
+    // Memories
+    MemNode memories[size / 4];
+    int mem_buf_ptr = 0;
 
     int j = {};
     while (j < size)
@@ -1290,7 +1286,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 {
                     if (!user_stream.eof())
                     {
-                        string txt = "";
+                        string txt = {};
                         user_stream >> txt;
                         c_string.push(txt);
                         numeric_stack.push(true);
@@ -1367,6 +1363,60 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
             }
 
+            // TODO: Implement !int
+            if (token_list[j].type == P_CON_INT)
+            {
+                if (numeric_stack.size() > 2)
+                {
+                    int size = numeric_stack.top();
+                    numeric_stack.pop();
+                    int buf = numeric_stack.top();
+                    numeric_stack.pop();
+                    string data = to_string(numeric_stack.top());
+                    numeric_stack.pop();
+                    int P = 0;
+
+                    for (int K = buf; K < (buf + size); K++)
+                        memory[K] = data[P++] - '0';
+
+                    numeric_stack.push(buf);
+                    numeric_stack.push(size);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": RROR: Too few arguments to function [int: buffer int: size int: data] !int" << endl;
+                    exit(1);
+                }
+            }
+
+            if (token_list[j].type == P_MAKE_INT)
+            {
+                if (numeric_stack.size() > 1)
+                {
+                    int size = numeric_stack.top();
+                    numeric_stack.pop();
+                    int buf = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    int my_exp = size - 1;
+                    int my_base = 10;
+
+                    int parsed = 0;
+
+                    for (int p = buf; p < (buf + size); p++)
+                    {
+                        parsed += memory[p] * pow(my_base, my_exp);
+                        my_exp--;
+                    }
+                    numeric_stack.push(parsed);
+                }
+                else
+                {
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": RROR: Too few arguments to function [int: buffer int: size] @int" << endl;
+                    exit(1);
+                }
+            }
+
             if (token_list[j].type == P_OPENFILE)
             {
                 if (numeric_stack.size() > 2)
@@ -1417,22 +1467,23 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     exit(1);
                 }
             }
-            
-            if(token_list[j].type == P_WRITEFILE)
+
+            if (token_list[j].type == P_WRITEFILE)
             {
-                if(!hasValidFile)
+                if (!hasValidFile)
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: invalid file provided to function `[file: file str: line] write`" << endl;
                     exit(1);
                 }
                 else
                 {
-                    if(c_string.size() > 0)
+                    if (c_string.size() > 0)
                     {
                         user_stream << c_string.top();
                         c_string.pop();
                     }
-                    else{
+                    else
+                    {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: too few arguments to function `[file: file str: line] write-file`" << endl;
                         exit(1);
                     }
@@ -1449,7 +1500,7 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     if (fd == 3)
                     {
                         string data = {};
-                        getline(cin,data);
+                        getline(cin, data);
 
                         size_t p = 0;
                         size_t cnt = 0;
@@ -1488,12 +1539,12 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
                     if (fd == 1)
                     {
-                        for (int p = arg2; p < (arg2+arg3); p++)
+                        for (int p = arg2; p < (arg2 + arg3); p++)
                             cout << memory[p];
                     }
                     else if (fd == 2)
                     {
-                        for (int p = arg2; p < (arg2+arg3); p++)
+                        for (int p = arg2; p < (arg2 + arg3); p++)
                             cerr << memory[p];
                     }
                     else
@@ -1518,6 +1569,56 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 if (location == -1)
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: incomplete IF statement definition expected a THEN keyword" << endl;
+                    exit(1);
+                }
+            }
+
+            if(token_list[j].type == P_OR)
+            {
+                if (numeric_stack.size() > 1)
+                {
+                    int bool1 = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    int bool2 = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    if((bool1 == true || bool1 == false) && (bool2 == true || bool2 == false))
+                    {
+                        numeric_stack.push(bool2 || bool1);
+                    }
+                    else{
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected BOOL but found INT" << endl;
+                        exit(1);
+                    }
+                }
+                else{
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected BOOL but found NONE" << endl;
+                    exit(1);
+                }
+            }
+
+            if(token_list[j].type == P_AND)
+            {
+                if (numeric_stack.size() > 1)
+                {
+                    int bool1 = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    int bool2 = numeric_stack.top();
+                    numeric_stack.pop();
+
+                    if((bool1 == true || bool1 == false) && (bool2 == true || bool2 == false))
+                    {
+                        numeric_stack.push(bool2 && bool1);
+                    }
+                    else{
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected BOOL but found INT" << endl;
+                        exit(1);
+                    }
+                }
+                else{
+                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected BOOL but found NONE" << endl;
                     exit(1);
                 }
             }
@@ -1633,13 +1734,12 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 }
             }
 
-            
-
             // TODO: Underconst
             if (token_list[j].type == P_WORD)
             {
                 bool isValidconst = false;
-                bool isValiddef = false;                
+                bool isValiddef = false;
+                bool isValidmem = false;
                 int cnt = -1;
 
                 for (auto k : constDefs)
@@ -1663,30 +1763,48 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     }
                 }
 
-                if (!isValidconst && !isValiddef)
+                int cnt3 = -1;
+                for (auto k : memories)
+                {
+                    cnt3++;
+                    if (k.name == token_list[j].token)
+                    {
+                        isValidmem = true;
+                        break;
+                    }
+                }
+
+                if (!isValidconst && !isValiddef && !isValidmem)
                 {
                     cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown token found `" << token_list[j].token << "`" << endl;
                     exit(1);
                 }
                 else
                 {
-                    if(isValiddef){
+                    if (isValidmem)
+                    {
+                        numeric_stack.push(memories[cnt3].buf);
+                        numeric_stack.push(memories[cnt3].offset);
+                    }
+                    else if (isValiddef)
+                    {
                         return_stack.push(j);
                         j = definition[cnt2].second;
                         ptoken.push(P_DEF);
                     }
-                    else if(isValidconst){
-                        if(constDefs[cnt].type_value == INT){
+                    else if (isValidconst)
+                    {
+                        if (constDefs[cnt].type_value == INT)
+                        {
                             numeric_stack.push(constDefs[cnt].iVal);
                         }
-                        else if(constDefs[cnt].type_value == STR)
+                        else if (constDefs[cnt].type_value == STR)
                         {
-                            c_string.push(constDefs[cnt].str_val);    
+                            c_string.push(constDefs[cnt].str_val);
                         }
                     }
                 }
             }
-            
 
             if (token_list[j].type == P_DEF)
             {
@@ -1697,37 +1815,37 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                 {
                     int begVerifier = EXPECT_ONLY_BEGIN(j, token_list, size);
 
-                    
                     if (begVerifier == -1)
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the body of the label to be marked with BEGIN keyword" << endl;
                         exit(1);
                     }
 
-                    if(token_list[j+2].type != P_BEGIN)
+                    if (token_list[j + 2].type != P_BEGIN)
                     {
-                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown token found in initialization of label `" << token_list[j+1].token << "` `" << usable_names[token_list[j+2].type] << ": " << token_list[j+2].token << "`" << endl;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: unknown token found in initialization of label `" << token_list[j + 1].token << "` `" << usable_names[token_list[j + 2].type] << ": " << token_list[j + 2].token << "`" << endl;
                         exit(1);
                     }
 
                     bool isCopy = false;
                     int cnt = -1;
 
-                    for(auto k : constDefs)
+                    for (auto k : constDefs)
                     {
                         cnt++;
-                        if(k.name == token_list[j+1].token){
+                        if (k.name == token_list[j + 1].token)
+                        {
                             isCopy = true;
                             break;
                         }
                     }
-                    
+
                     if (isCopy)
                     {
-                        cout << filename << ":" << token_list[j+1].r << ":" << token_list[j+1].c << ": ERROR: redefinition of CONST `" << token_list[j+1].token << "`" << endl;
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of CONST `" << token_list[j + 1].token << "`" << endl;
                         cout << filename << ":" << constDefs[cnt].row << ":" << constDefs[cnt].col << ": NOTE: first declared here" << endl;
                         exit(1);
-                    } 
+                    }
 
                     j++;
                     isCopy = false;
@@ -1749,22 +1867,40 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                         cout << filename << ":" << definition[cnt].third.r << ":" << definition[cnt].third.c << ": NOTE: first declared here" << endl;
                         exit(1);
                     }
-                    else
+
+                    isCopy = false;
+                    cnt = -1;
+
+                    for (auto p : memories)
                     {
-                        definition[tp].first = token_list[j].token;
-                        definition[tp].second = begVerifier;
-                        definition[tp].third = token_list[j];
-                        tp++;
+                        cnt++;
+                        if (p.name == token_list[j].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
                     }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: redefinition of MEMORY `" << token_list[j].token << "`" << endl;
+                        cout << filename << ":" << memories[cnt].row << ":" << memories[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    }
+
+                    definition[tp].first = token_list[j].token;
+                    definition[tp].second = begVerifier;
+                    definition[tp].third = token_list[j];
+                    tp++;
                 }
                 else
                 {
                     if (token_list[j + 1].type != P_WORD && token_list[j + 1].type != P_EOT)
                     {
-                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the label name to be WORD but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected the label name to be WORD but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
                         exit(1);
                     }
-                    if(token_list[j+1].type == P_EOT)
+                    if (token_list[j + 1].type == P_EOT)
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this label but found NONE" << endl;
                         exit(1);
@@ -1802,13 +1938,12 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
             if (token_list[j].type == P_ASSERT)
             {
-                if(numeric_stack.size() > 0 && c_string.size() > 0)
+                if (numeric_stack.size() > 0 && c_string.size() > 0)
                 {
-                    if(numeric_stack.top() == true)
+                    if (numeric_stack.top() == true)
                     {
-
                     }
-                    else if(numeric_stack.top() == false)
+                    else if (numeric_stack.top() == false)
                     {
                         cout << "AssertionError: " << c_string.top();
                         exit(1);
@@ -1828,31 +1963,124 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     exit(1);
                 }
             }
+            if (token_list[j].type == P_MEM)
+            {
+                if (!ptoken.empty() && ptoken.top() == P_MEM)
+                {
+                    cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: MEMORY definition inside of a MEMORY definition is not allowed" << endl;
+                    exit(1);
+                }
+
+                ptoken.push(P_MEM);
+
+                if (token_list[j + 1].type == P_WORD)
+                {
+                    bool isCopy = false;
+                    int cnt = -1;
+
+                    for (auto k : constDefs)
+                    {
+                        cnt++;
+                        if (k.name == token_list[j + 1].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of CONST `" << token_list[j + 1].token << "`" << endl;
+                        cout << filename << ":" << constDefs[cnt].row << ":" << constDefs[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    }
+                    /* Copy2 checks */
+                    isCopy = false;
+                    cnt = -1;
+
+                    for (auto p : definition)
+                    {
+                        cnt++;
+                        if (p.first == token_list[j + 1].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of LABEL `" << token_list[j + 1].token << "`" << endl;
+                        cout << filename << ":" << definition[cnt].third.r << ":" << definition[cnt].third.c << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    }
+
+                    isCopy = false;
+                    cnt = -1;
+
+                    for (auto p : memories)
+                    {
+                        cnt++;
+                        if (p.name == token_list[j + 1].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of MEMORY `" << token_list[j + 1].token << "`" << endl;
+                        cout << filename << ":" << memories[cnt].row << ":" << memories[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    }
+
+                    memories[mem_buf_ptr].name = token_list[j + 1].token;
+                    memories[mem_buf_ptr].row = token_list[j].r;
+                    memories[mem_buf_ptr].col = token_list[j].c;
+
+                    j++;
+                }
+                else
+                {
+                    if (token_list[j + 1].type != P_WORD && token_list[j + 1].type != P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the MEMORY name to be WORD but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
+                        exit(1);
+                    }
+                    if (token_list[j + 1].type == P_EOT)
+                    {
+                        cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this MEMORY but found NONE" << endl;
+                        exit(1);
+                    }
+                }
+            }
+
             // TODO: Underconst
             if (token_list[j].type == P_CONST)
             {
-                if(!ptoken.empty() && ptoken.top() == P_CONST)
+                if (!ptoken.empty() && ptoken.top() == P_CONST)
                 {
                     cout << filename << ":" << token_list[j + 2].r << ":" << token_list[j + 2].c << ": ERROR: CONST definition inside of a CONST definition is not allowed" << endl;
                     exit(1);
                 }
 
                 ptoken.push(P_CONST);
-                
-                if(token_list[j+1].type == P_WORD)
+
+                if (token_list[j + 1].type == P_WORD)
                 {
                     if (token_list[j + 2].type != P_TP_INT && token_list[j + 2].type != P_TP_STR && token_list[j + 2].type != P_EOT)
                     {
                         cout << filename << ":" << token_list[j + 2].r << ":" << token_list[j + 2].c << ": ERROR: expected the const type to be INT or STR but found `" << usable_names[token_list[j + 2].type] << ": " << token_list[j + 2].token << "`" << endl;
                         exit(1);
                     }
-                    if(token_list[j+2].type == P_EOT)
+                    if (token_list[j + 2].type == P_EOT)
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a type to initialization this CONST but found NONE" << endl;
                         exit(1);
                     }
 
-                    if(EXPECT_ONLY_END(j,token_list,size) == -1)
+                    if (EXPECT_ONLY_END(j, token_list, size) == -1)
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an END of this CONST definition" << endl;
                         exit(1);
@@ -1862,29 +2090,10 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     bool isCopy = false;
                     int cnt = -1;
 
-                    for(auto k : constDefs)
+                    for (auto k : constDefs)
                     {
                         cnt++;
-                        if(k.name == token_list[j+1].token){
-                            isCopy = true;
-                            break;
-                        }
-                    }
-                    
-                    if (isCopy)
-                    {
-                        cout << filename << ":" << token_list[j+1].r << ":" << token_list[j+1].c << ": ERROR: redefinition of CONST `" << token_list[j+1].token << "`" << endl;
-                        cout << filename << ":" << constDefs[cnt].row << ":" << constDefs[cnt].col << ": NOTE: first declared here" << endl;
-                        exit(1);
-                    } 
-                    /* Copy2 checks */
-                    isCopy = false;
-                    cnt = -1;
-
-                    for (auto p : definition)
-                    {
-                        cnt++;
-                        if (p.first == token_list[j+1].token)
+                        if (k.name == token_list[j + 1].token)
                         {
                             isCopy = true;
                             break;
@@ -1893,20 +2102,60 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
                     if (isCopy)
                     {
-                        cout << filename << ":" << token_list[j+1].r << ":" << token_list[j+1].c << ": ERROR: redefinition of LABEL `" << token_list[j+1].token << "`" << endl;
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of CONST `" << token_list[j + 1].token << "`" << endl;
+                        cout << filename << ":" << constDefs[cnt].row << ":" << constDefs[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    }
+                    /* Copy2 checks */
+                    isCopy = false;
+                    cnt = -1;
+
+                    for (auto p : definition)
+                    {
+                        cnt++;
+                        if (p.first == token_list[j + 1].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of LABEL `" << token_list[j + 1].token << "`" << endl;
                         cout << filename << ":" << definition[cnt].third.r << ":" << definition[cnt].third.c << ": NOTE: first declared here" << endl;
                         exit(1);
-                    } 
+                    }
+
+                    isCopy = false;
+                    cnt = -1;
+
+                    for (auto p : memories)
+                    {
+                        cnt++;
+                        if (p.name == token_list[j + 1].token)
+                        {
+                            isCopy = true;
+                            break;
+                        }
+                    }
+
+                    if (isCopy)
+                    {
+                        cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: redefinition of MEMORY `" << token_list[j + 1].token << "`" << endl;
+                        cout << filename << ":" << memories[cnt].row << ":" << memories[cnt].col << ": NOTE: first declared here" << endl;
+                        exit(1);
+                    }
 
                     const_buf++;
-                    constDefs[const_buf].name = token_list[j+1].token; 
-                    j += 2;   
+                    constDefs[const_buf].name = token_list[j + 1].token;
+                    j += 2;
 
-                    if(token_list[j].type == P_TP_INT)
+                    if (token_list[j].type == P_TP_INT)
                     {
-                        constDefs[const_buf].type_value = INT; 
+                        constDefs[const_buf].type_value = INT;
                     }
-                    else if(token_list[j].type == P_TP_STR)
+                    else if (token_list[j].type == P_TP_STR)
                     {
                         constDefs[const_buf].type_value = STR;
                     }
@@ -1919,14 +2168,14 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     constDefs[const_buf].col = token_list[j].c;
 
                     // Continueing
-                    /* 
+                    /*
                     ConstDef newDef;
                     newDef.name = token_list[j+1].token;
                     j += 2;
 
                     if(token_list[j].type == P_TP_INT)
                     {
-                        newDef.type_value = INT; 
+                        newDef.type_value = INT;
                     }
                     else if(token_list[j].type == P_TP_STR)
                     {
@@ -1943,14 +2192,14 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                     constDefs[const_buf] = newDef;
                     */
                 }
-                else 
+                else
                 {
                     if (token_list[j + 1].type != P_WORD && token_list[j + 1].type != P_EOT)
                     {
                         cout << filename << ":" << token_list[j + 1].r << ":" << token_list[j + 1].c << ": ERROR: expected the CONST name to be WORD but found `" << usable_names[token_list[j + 1].type] << ": " << token_list[j + 1].token << "`" << endl;
                         exit(1);
                     }
-                    if(token_list[j+1].type == P_EOT)
+                    if (token_list[j + 1].type == P_EOT)
                     {
                         cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a name of this CONST but found NONE" << endl;
                         exit(1);
@@ -1960,15 +2209,36 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
 
             if (token_list[j].type == P_END)
             {
-                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_WHILE || ptoken.top() == P_DEF
-                || ptoken.top() == P_CONST))
+                if (!ptoken.empty() && (ptoken.top() == P_IF || ptoken.top() == P_MEM || ptoken.top() == P_WHILE || ptoken.top() == P_DEF || ptoken.top() == P_CONST))
                 {
-                    // cout << ptoken.top(); 
-                    if(ptoken.top() == P_CONST)
+                    // cout << ptoken.top();
+                    if (ptoken.top() == P_MEM)
                     {
-                        if(constDefs[const_buf].type_value == INT)
+                        if (numeric_stack.size() > 0)
                         {
-                            if(numeric_stack.size() > 0){
+                            int siz = numeric_stack.top();
+                            numeric_stack.pop();
+
+                            memories[mem_buf_ptr].buf = free_ptr;
+                            memories[mem_buf_ptr].offset = siz;
+
+                            free_ptr += siz + 1;
+
+                            mem_buf_ptr++;
+                        }
+                        else
+                        {
+                            cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected a size of this MEMORY" << endl;
+                            exit(1);
+                        }
+                    }
+
+                    if (ptoken.top() == P_CONST)
+                    {
+                        if (constDefs[const_buf].type_value == INT)
+                        {
+                            if (numeric_stack.size() > 0)
+                            {
                                 constDefs[const_buf].iVal = numeric_stack.top();
                                 numeric_stack.pop();
                             }
@@ -1978,24 +2248,24 @@ void simulate_file(const char *filename, Pitt_token *token_list, const int &argc
                                 exit(1);
                             }
                         }
-                        else if(constDefs[const_buf].type_value == STR)
+                        else if (constDefs[const_buf].type_value == STR)
                         {
-                                if(numeric_stack.size() > 1)
-                                {
-                                    int end = numeric_stack.top();
-                                    numeric_stack.pop();
+                            if (numeric_stack.size() > 1)
+                            {
+                                int end = numeric_stack.top();
+                                numeric_stack.pop();
 
-                                    int begin = numeric_stack.top();
-                                    numeric_stack.pop();
+                                int begin = numeric_stack.top();
+                                numeric_stack.pop();
 
-                                    for(;begin < end; begin++)
-                                        constDefs[const_buf].str_val += memory[begin];
-                                }
-                                else
-                                {
-                                    cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an STR for this const but found NONE" << endl;
-                                    exit(1);
-                                }
+                                for (; begin < end; begin++)
+                                    constDefs[const_buf].str_val += memory[begin];
+                            }
+                            else
+                            {
+                                cout << filename << ":" << token_list[j].r << ":" << token_list[j].c << ": ERROR: expected an STR for this const but found NONE" << endl;
+                                exit(1);
+                            }
                         }
                     }
 

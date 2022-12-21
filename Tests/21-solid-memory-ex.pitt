@@ -1,0 +1,21 @@
+def !Buf begin 0 swap !i32 end
+def !Ptr begin 1 swap !i32 end 
+def @Buf begin 0 @i32 end
+def @Ptr begin 1 @i32 end 
+
+def memcpy begin 
+    over + !Ptr
+    !Buf
+
+    drop
+
+    while @Buf @Ptr < then
+    	 dup @i8 @Buf swap !i8
+	 @Buf 1 + !Buf
+	 1 + 
+    end drop 
+end
+
+malloc hello 13 end
+"Hello, World\n" hello memcpy
+hello over + puts 

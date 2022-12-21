@@ -1,0 +1,14 @@
+addr(i8)      3 !i8
+addr(i8) 1 +  5 !i8
+addr(i8) 2 +  9 !i8
+
+addr(i8) 3
+@int print  
+
+const buf int       15 end 
+const siz int        7 end 
+
+3276447 buf siz !int 
+"my digit: " puts 
+@int print 
+

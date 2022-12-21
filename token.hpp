@@ -91,6 +91,11 @@ typedef enum
     P_TP_INT, 
     P_TP_STR,
     P_ASSERT,
+    P_MAKE_INT,
+    P_CON_INT,
+    P_MEM,
+    P_AND,
+    P_OR,
     P_COMMENT,
     P_EOT
 } PittType;
@@ -171,6 +176,11 @@ std::string usable_names[P_EOT] =
         "KEYWORD",
         "TYPENAME",
         "TYPENAME",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
+        "KEYWORD",
         "KEYWORD"
 };
 
@@ -187,6 +197,12 @@ typedef enum {
 
 void init_map()
 {
+    usable_map["and"] = P_AND;
+    usable_map["or"] = P_OR;
+
+    usable_map["malloc"] = P_MEM;
+    usable_map["!int"] = P_CON_INT;
+    usable_map["@int"] = P_MAKE_INT;
     usable_map["assert"] = P_ASSERT;
     usable_map["const"] = P_CONST;
     usable_map["int"] = P_TP_INT;
@@ -287,5 +303,11 @@ typedef struct const_def{
     std::string str_val = "";
 
 }ConstDef;
+
+typedef struct memory_node{
+    int row {}, col {};
+    int buf {}, offset {};
+    std::string name; 
+}MemNode;
 
 #endif
